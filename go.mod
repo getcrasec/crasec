@@ -1,3 +1,3 @@
-module github.com/getcrasec/crasec-cli.git
+module github.com/getcrasec/crasec.git
 
 go 1.25.5
