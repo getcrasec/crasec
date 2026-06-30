@@ -1,0 +1,25 @@
+version: "2"
+
+linters:
+  default: none
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - gosec
+
+  settings:
+    errcheck:
+      # Report on assignment of errors to blank identifier: _ = f()
+      check-blank: true
+
+    govet:
+      enable-all: true
+
+    gosec:
+      excludes:
+        # Unhandled errors — errcheck already covers this, avoids duplicate noise
+        - G104
+
+issues:
+  max-same-issues: 0

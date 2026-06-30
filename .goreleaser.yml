@@ -1,0 +1,54 @@
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: crasec
+    main: .
+    binary: crasec
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    # windows/arm64 is excluded — uncommon target, add back if needed
+    ignore:
+      - goos: windows
+        goarch: arm64
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w
+      - -X github.com/getcrasec/crasec/cmd.version={{.Version}}
+      - -X github.com/getcrasec/crasec/cmd.commit={{.Commit}}
+      - -X github.com/getcrasec/crasec/cmd.date={{.Date}}
+
+archives:
+  - id: crasec
+    formats:
+      - tar.gz
+    # Windows gets a zip instead
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: "checksums.txt"
+  algorithm: sha256
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+      - "^chore:"
+      - Merge pull request
+      - Merge branch
