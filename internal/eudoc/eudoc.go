@@ -17,8 +17,15 @@ import (
 	"github.com/getcrasec/crasec/internal/annex7"
 )
 
-// DeclarationStatement is the fixed wording CRA Annex V requires verbatim.
-const DeclarationStatement = "This declaration of conformity is issued under the sole responsibility of the manufacturer."
+// Statement is the fixed NLF declaration statement in one language — see
+// internal/doc, which embeds it in all languages crasec currently has a
+// translation for. CRA Annex V requires the DoC to be available in the
+// language(s) of every member state a product is sold into, so a
+// Declaration can carry more than one.
+type Statement struct {
+	Language string `json:"language"` // ISO 639-1 code, e.g. "en"
+	Text     string `json:"text"`
+}
 
 // Declaration is the EU Declaration of Conformity for one product,
 // covering every field CRA Annex V requires.
@@ -26,11 +33,10 @@ type Declaration struct {
 	Manufacturer Manufacturer `json:"manufacturer"`
 	Product      Product      `json:"product"`
 
-	// DeclarationStatement always equals the constant above; it's kept in
-	// the struct (rather than hard-coded only in the template) so the JSON
-	// this command writes is a complete, standalone record of what was
-	// declared.
-	DeclarationStatement string `json:"declaration_statement"`
+	// Statements is the declaration statement translated into each
+	// language requested via "doc generate --languages", in request order.
+	// At least one is required.
+	Statements []Statement `json:"statements"`
 
 	// ObjectOfDeclaration describes the product and its intended use —
 	// what, precisely, this declaration is about.
@@ -86,14 +92,12 @@ type Signatory struct {
 
 // FromAnnex7 pre-populates a Declaration from an Annex VII technical file
 // wherever their fields overlap, to minimize re-entry. Manufacturer
-// identity and signatory details aren't tracked by Annex VII at all and
-// must be supplied separately; callers typically overlay a few more fields
-// (model number, notified body number, etc.) that Annex VII doesn't carry
-// either.
+// identity, signatory details, and the translated Statements aren't
+// tracked by Annex VII at all and must be supplied separately; callers
+// typically overlay a few more fields (model number, notified body number,
+// etc.) that Annex VII doesn't carry either.
 func FromAnnex7(doc *annex7.TechnicalFile) Declaration {
-	d := Declaration{
-		DeclarationStatement: DeclarationStatement,
-	}
+	var d Declaration
 	d.Product.Name = doc.General.ProductName
 	d.Product.BatchOrVersionIdentifier = doc.General.ProductVersion
 	d.ObjectOfDeclaration = composeObject(doc)
@@ -159,7 +163,11 @@ func (d Declaration) Validate() []string {
 	req(d.Manufacturer.Address != "", "manufacturer.address")
 	req(d.Product.Name != "", "product.name")
 	req(d.Product.BatchOrVersionIdentifier != "", "product.batch_or_version_identifier")
-	req(d.DeclarationStatement != "", "declaration_statement")
+	req(len(d.Statements) > 0, "statements")
+	for i, s := range d.Statements {
+		req(s.Language != "", fmt.Sprintf("statements[%d].language", i))
+		req(s.Text != "", fmt.Sprintf("statements[%d].text", i))
+	}
 	req(d.ObjectOfDeclaration != "", "object_of_declaration")
 	req(d.Conformity.AssessedToAnnexIDirectly || len(d.Conformity.Standards) > 0,
 		"conformity.standards (or conformity.assessed_to_annex_i_directly)")

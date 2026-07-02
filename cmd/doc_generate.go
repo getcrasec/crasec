@@ -10,6 +10,7 @@ import (
 
 	"github.com/getcrasec/crasec/internal/annex7"
 	"github.com/getcrasec/crasec/internal/artifactsign"
+	"github.com/getcrasec/crasec/internal/doc"
 	"github.com/getcrasec/crasec/internal/eudoc"
 	"github.com/getcrasec/crasec/internal/eudocexport"
 	"github.com/getcrasec/crasec/internal/pdfexport"
@@ -23,6 +24,7 @@ var (
 	docNoPDF      bool
 	docChromePath string
 	docSign       bool
+	docLanguages  string
 
 	docManufacturerName    string
 	docManufacturerAddress string
@@ -60,6 +62,14 @@ written, if any Annex V-required field is still missing after
 auto-population and flag overrides — unlike "annex7 scaffold", which is
 allowed to stay incomplete between wizard sessions.
 
+CRA Annex V requires the declaration to be available in the language(s) of
+every member state a product is sold into. --languages (default "en")
+takes a comma-separated list of ISO 639-1 codes (e.g. en,it,de,fr) or "all"
+for every EU language crasec currently has an embedded translation for;
+each is rendered as its own line in the PDF's declaration statement. An
+explicitly-named language with no embedded translation yet is a hard
+error — "all" degrades gracefully instead and reports what's missing.
+
 Output is eu-doc.json (machine-readable) and eu-doc.pdf (via headless
 Chrome — see "crasec annex7 export" for the same --chrome-path/$CHROME_PATH
 detection and error behavior; --no-pdf skips it if no browser is
@@ -69,7 +79,8 @@ available). Pass --sign to also Sigstore-sign both files immediately
   crasec annex7 scaffold --product myapp
   crasec doc generate --product myapp --annex7 annex7-myapp.json \
     --manufacturer-name "Acme Corp" --manufacturer-address "1 Rue de la Paix, 75002 Paris, France" \
-    --signatory-name "Jane Doe" --signatory-function "CTO" --signatory-place Paris`,
+    --signatory-name "Jane Doe" --signatory-function "CTO" --signatory-place Paris \
+    --languages en,it,de,fr`,
 	RunE: runDocGenerate,
 }
 
@@ -83,6 +94,7 @@ func init() {
 	docGenerateCmd.Flags().BoolVar(&docNoPDF, "no-pdf", false, "skip PDF conversion (JSON only); use if no Chrome/Chromium is available")
 	docGenerateCmd.Flags().StringVar(&docChromePath, "chrome-path", "", "path to a Chrome/Chromium executable (default: $CHROME_PATH, then auto-detected)")
 	docGenerateCmd.Flags().BoolVar(&docSign, "sign", false, "Sigstore-sign both outputs immediately after writing them")
+	docGenerateCmd.Flags().StringVar(&docLanguages, "languages", "en", "comma-separated EU language codes (ISO 639-1) for the declaration statement, or \"all\"")
 
 	docGenerateCmd.Flags().StringVar(&docManufacturerName, "manufacturer-name", "", "manufacturer name (required)")
 	docGenerateCmd.Flags().StringVar(&docManufacturerAddress, "manufacturer-address", "", "manufacturer's EU-registered address (required)")
@@ -131,6 +143,10 @@ func runDocGenerate(cmd *cobra.Command, _ []string) error {
 	}
 
 	applyDocOverrides(cmd, &declaration)
+
+	if err := applyLanguages(cmd, &declaration); err != nil {
+		return err
+	}
 
 	if missing := declaration.Validate(); len(missing) > 0 {
 		return fmt.Errorf("EU Declaration of Conformity is missing required field(s): %s", strings.Join(missing, ", "))
@@ -220,6 +236,44 @@ func applyDocOverrides(cmd *cobra.Command, d *eudoc.Declaration) {
 	if d.Signatory.Date == "" {
 		d.Signatory.Date = time.Now().Format("2006-01-02")
 	}
+}
+
+// applyLanguages resolves --languages into Declaration.Statements. Unlike
+// the rest of applyDocOverrides, an explicitly-named language that isn't
+// available is a hard error: silently dropping a language someone asked
+// for by name would be worse than failing loudly on a legal document.
+// "all" degrades gracefully instead, since it inherently means "whatever's
+// currently embedded" — see internal/doc, which is filled in incrementally.
+func applyLanguages(cmd *cobra.Command, d *eudoc.Declaration) error {
+	raw := strings.TrimSpace(docLanguages)
+	if raw == "" {
+		raw = "en"
+	}
+
+	var codes []string
+	if strings.EqualFold(raw, "all") {
+		codes = doc.AvailableLanguages()
+		if missing := doc.MissingLanguages(); len(missing) > 0 {
+			fmt.Fprintf(cmd.ErrOrStderr(), "note: %d of the EU's 24 official languages don't have an embedded translation yet and are omitted: %s\n",
+				len(missing), strings.Join(missing, ", "))
+		}
+	} else {
+		codes = splitCommaList(raw)
+	}
+	if len(codes) == 0 {
+		return fmt.Errorf(`--languages must list at least one EU language code, or "all"`)
+	}
+
+	statements := make([]eudoc.Statement, 0, len(codes))
+	for _, code := range codes {
+		text, err := doc.Statement(code)
+		if err != nil {
+			return fmt.Errorf("--languages: %w", err)
+		}
+		statements = append(statements, eudoc.Statement{Language: strings.ToLower(strings.TrimSpace(code)), Text: text})
+	}
+	d.Statements = statements
+	return nil
 }
 
 func splitCommaList(s string) []string {

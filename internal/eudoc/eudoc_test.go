@@ -25,8 +25,8 @@ func TestFromAnnex7_MapsOverlappingFields(t *testing.T) {
 	if d.Product.BatchOrVersionIdentifier != "2.3.1" {
 		t.Errorf("expected batch/version %q, got %q", "2.3.1", d.Product.BatchOrVersionIdentifier)
 	}
-	if d.DeclarationStatement != DeclarationStatement {
-		t.Errorf("expected the fixed Annex V declaration statement, got %q", d.DeclarationStatement)
+	if len(d.Statements) != 0 {
+		t.Error("expected FromAnnex7 to leave Statements for the caller to set via --languages")
 	}
 	if d.ObjectOfDeclaration == "" {
 		t.Error("expected a composed object of declaration")
@@ -69,6 +69,7 @@ func TestValidate_ReportsEachMissingField(t *testing.T) {
 	want := []string{
 		"manufacturer.name", "manufacturer.address",
 		"product.name", "product.batch_or_version_identifier",
+		"statements",
 		"object_of_declaration",
 		"assessment_procedure",
 		"signatory.name", "signatory.function", "signatory.place", "signatory.date",
@@ -85,17 +86,21 @@ func TestValidate_ReportsEachMissingField(t *testing.T) {
 			t.Errorf("expected %q to be reported missing; got %v", w, missing)
 		}
 	}
+}
 
-	// declaration_statement is missing here since it's zero-valued, but
-	// FromAnnex7 always sets it — check it's specifically checked too.
+func TestValidate_StatementMissingLanguageOrTextIsFlagged(t *testing.T) {
+	d := validDeclaration()
+	d.Statements = []Statement{{Language: "en", Text: ""}}
+
+	missing := d.Validate()
 	found := false
 	for _, m := range missing {
-		if m == "declaration_statement" {
+		if m == "statements[0].text" {
 			found = true
 		}
 	}
 	if !found {
-		t.Errorf("expected declaration_statement to be reported missing on a zero Declaration; got %v", missing)
+		t.Errorf("expected a statement with blank text to be flagged; got %v", missing)
 	}
 }
 
@@ -137,16 +142,19 @@ func TestSaveLoad_RoundTrips(t *testing.T) {
 	if loaded.Manufacturer.Name != d.Manufacturer.Name || loaded.Product.Name != d.Product.Name {
 		t.Fatalf("expected round-tripped declaration to match, got %+v", loaded)
 	}
+	if len(loaded.Statements) != len(d.Statements) || loaded.Statements[0].Language != "en" {
+		t.Fatalf("expected round-tripped statements to match, got %+v", loaded.Statements)
+	}
 }
 
 func validDeclaration() Declaration {
 	return Declaration{
-		Manufacturer:         Manufacturer{Name: "Acme Corp", Address: "1 Rue de la Paix, 75002 Paris, France"},
-		Product:              Product{Name: "myapp", BatchOrVersionIdentifier: "1.0.0"},
-		DeclarationStatement: DeclarationStatement,
-		ObjectOfDeclaration:  "myapp version 1.0.0 — does things.",
-		Conformity:           Conformity{AssessedToAnnexIDirectly: true},
-		AssessmentProcedure:  "Module A — internal production control (CRA Annex VIII)",
-		Signatory:            Signatory{Name: "Jane Doe", Function: "CTO", Place: "Paris", Date: "2026-07-02"},
+		Manufacturer:        Manufacturer{Name: "Acme Corp", Address: "1 Rue de la Paix, 75002 Paris, France"},
+		Product:             Product{Name: "myapp", BatchOrVersionIdentifier: "1.0.0"},
+		Statements:          []Statement{{Language: "en", Text: "This declaration of conformity is issued under the sole responsibility of the manufacturer."}},
+		ObjectOfDeclaration: "myapp version 1.0.0 — does things.",
+		Conformity:          Conformity{AssessedToAnnexIDirectly: true},
+		AssessmentProcedure: "Module A — internal production control (CRA Annex VIII)",
+		Signatory:           Signatory{Name: "Jane Doe", Function: "CTO", Place: "Paris", Date: "2026-07-02"},
 	}
 }

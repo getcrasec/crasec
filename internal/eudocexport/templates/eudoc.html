@@ -42,9 +42,32 @@
     border: 2px solid #1a2233;
     border-radius: 8px;
     padding: 14px 18px;
-    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .statement-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 8px 20px;
+  }
+  .statement-line { font-weight: 600; font-size: 10pt; }
+  .statement-line .lang-tag {
+    display: inline-block;
+    background: #1a2233;
+    color: #fff;
+    font-size: 7.5pt;
+    font-weight: 700;
+    border-radius: 3px;
+    padding: 1px 5px;
+    margin-right: 6px;
+    text-transform: uppercase;
+    vertical-align: middle;
+  }
+  p.translation-note {
+    font-size: 7.5pt;
+    font-style: italic;
+    color: #8a94a3;
     text-align: center;
-    margin-bottom: 22px;
+    margin: 0 0 22px;
   }
 
   section.block {
@@ -118,7 +141,14 @@
 <h1 class="title">EU Declaration of Conformity</h1>
 <p class="subtitle">Issued pursuant to Regulation (EU) 2024/2847 (Cyber Resilience Act), Annex V</p>
 
-<div class="statement-box">{{.D.DeclarationStatement}}</div>
+<div class="statement-box">
+  <div class="statement-grid">
+    {{range .D.Statements}}
+    <div class="statement-line"><span class="lang-tag">{{.Language}}</span>{{.Text}}</div>
+    {{end}}
+  </div>
+</div>
+<p class="translation-note">Translations follow standard EU New Legislative Framework wording; verify against official published translations before regulatory submission.</p>
 
 <section class="block">
   <div class="block-title">1. Manufacturer</div>
