@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/getcrasec/crasec/internal/euvd"
 	"github.com/getcrasec/crasec/internal/kev"
 	"github.com/getcrasec/crasec/internal/vulnscan"
 )
@@ -18,6 +19,7 @@ var (
 	correlateUseOSV   bool
 	correlateUseKEV   bool
 	correlateKEVCache string
+	correlateUseEUVD  bool
 )
 
 var vulnCorrelateCmd = &cobra.Command{
@@ -49,6 +51,17 @@ report actively exploited vulnerabilities to ENISA within 24 hours. The KEV
 catalog is downloaded from CISA and cached locally, refreshed once every 24
 hours; use --kev=false to skip this check entirely.
 
+Pass --enable-euvd to also cross-reference findings against ENISA's own EU
+Vulnerability Database (EUVD) — the CRA's authoritative vulnerability
+source and the database behind ENISA's Single Reporting Platform. Matches
+attach EUVD's ID and CVSS assessment (euvdBaseScore etc.) alongside, not in
+place of, the finding's existing CVSS data; when the two disagree on
+severity by a full point or more, severityDisagreement is set so both
+scores stay visible instead of one silently winning. EUVD's API is
+currently in beta with no published stable spec, so this is opt-in and
+off by default: a single failed request is treated as "EUVD is down" and
+correlation proceeds without EUVD data rather than failing the run.
+
 Typical pipeline:
   crasec sbom generate --target ./path -o sbom.cdx.json
   crasec vuln correlate --sbom sbom.cdx.json
@@ -68,6 +81,7 @@ func init() {
 	vulnCorrelateCmd.Flags().BoolVar(&correlateUseOSV, "osv-scanner", true, "also query OSV.dev via osv-scanner and merge results with Grype's (requires osv-scanner on PATH)")
 	vulnCorrelateCmd.Flags().BoolVar(&correlateUseKEV, "kev", true, "flag findings present in the CISA Known Exploited Vulnerabilities catalog (Article 14 trigger)")
 	vulnCorrelateCmd.Flags().StringVar(&correlateKEVCache, "kev-cache", "", "path to cache the KEV catalog at (default: ~/.crasec/cache/kev.json)")
+	vulnCorrelateCmd.Flags().BoolVar(&correlateUseEUVD, "enable-euvd", false, "cross-reference findings against ENISA's EU Vulnerability Database (beta API; off by default)")
 	if err := vulnCorrelateCmd.MarkFlagRequired("sbom"); err != nil {
 		panic(err)
 	}
@@ -103,6 +117,18 @@ func runVulnCorrelate(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
+	disagreementCount := 0
+	if correlateUseEUVD {
+		if err := vulnscan.ApplyEUVD(cmd.Context(), findings, euvd.NewClient()); err != nil {
+			fmt.Fprintf(cmd.ErrOrStderr(), "warning: EUVD cross-reference unavailable (%v); continuing without it\n", err)
+		}
+		for _, f := range findings {
+			if f.SeverityDisagreement {
+				disagreementCount++
+			}
+		}
+	}
+
 	w, closeW, err := resolveCorrelateWriter(cmd)
 	if err != nil {
 		return err
@@ -118,6 +144,9 @@ func runVulnCorrelate(cmd *cobra.Command, _ []string) error {
 	fmt.Fprintf(cmd.ErrOrStderr(), "found %d vulnerability matches\n", len(findings))
 	if correlateUseKEV {
 		fmt.Fprintf(cmd.ErrOrStderr(), "%d ACTIVELY EXPLOITED (CISA KEV) — Article 14 report required within 24h\n", exploitedCount)
+	}
+	if correlateUseEUVD && disagreementCount > 0 {
+		fmt.Fprintf(cmd.ErrOrStderr(), "%d finding(s) where EUVD and NVD/OSV disagree on severity by 1.0+ (see severityDisagreement)\n", disagreementCount)
 	}
 	return nil
 }

@@ -65,6 +65,20 @@ type Finding struct {
 	// Article14Threshold, which a KEV match always does.
 	CRARelevanceScore       float64 `json:"craRelevanceScore"`
 	Article14ReportRequired bool    `json:"article14ReportRequired"`
+
+	// EUVD fields, populated when the finding is cross-referenced against
+	// ENISA's EU Vulnerability Database (--enable-euvd; opt-in since its
+	// API is still in beta). EUVDBaseScore is kept separate from CVSSScore
+	// rather than overwriting it, so that when EUVD and the finding's
+	// existing CVSS source disagree, both scores stay visible instead of
+	// one silently clobbering the other; SeverityDisagreement flags when
+	// that's happened.
+	EUVDID               string  `json:"euvdId,omitempty"`
+	EUVDBaseScore        float64 `json:"euvdBaseScore,omitempty"`
+	EUVDBaseScoreVersion string  `json:"euvdBaseScoreVersion,omitempty"`
+	EUVDBaseScoreVector  string  `json:"euvdBaseScoreVector,omitempty"`
+	EUVDExploitedSince   string  `json:"euvdExploitedSince,omitempty"`
+	SeverityDisagreement bool    `json:"severityDisagreement,omitempty"`
 }
 
 // Correlate matches the CycloneDX SBOM at sbomPath against Grype's
