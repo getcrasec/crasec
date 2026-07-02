@@ -50,6 +50,21 @@ type Finding struct {
 	// "osv-scanner"), for auditability once findings from multiple scanners
 	// have been merged.
 	Scanners []string `json:"scanners,omitempty"`
+
+	// ActivelyExploited is true when the vulnerability ID (or one of its
+	// aliases) appears in CISA's Known Exploited Vulnerabilities catalog.
+	// This is the "ACTIVELY EXPLOITED" flag, and the trigger for CRA
+	// Article 14's 24-hour ENISA reporting requirement.
+	ActivelyExploited bool   `json:"activelyExploited"`
+	KEVDateAdded      string `json:"kevDateAdded,omitempty"`
+	KEVDueDate        string `json:"kevDueDate,omitempty"`
+
+	// CRARelevanceScore is a 0-100 triage heuristic (not a certified
+	// compliance score): CVSS base score scaled to 0-100, forced to 100 on
+	// a KEV match. Article14ReportRequired is set once it crosses
+	// Article14Threshold, which a KEV match always does.
+	CRARelevanceScore       float64 `json:"craRelevanceScore"`
+	Article14ReportRequired bool    `json:"article14ReportRequired"`
 }
 
 // Correlate matches the CycloneDX SBOM at sbomPath against Grype's

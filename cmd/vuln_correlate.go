@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/getcrasec/crasec/internal/kev"
 	"github.com/getcrasec/crasec/internal/vulnscan"
 )
 
@@ -15,6 +16,8 @@ var (
 	correlateSBOMPath string
 	correlateOutput   string
 	correlateUseOSV   bool
+	correlateUseKEV   bool
+	correlateKEVCache string
 )
 
 var vulnCorrelateCmd = &cobra.Command{
@@ -36,6 +39,16 @@ which scanner(s) reported it. osv-scanner must already be installed and on
 PATH (go install github.com/google/osv-scanner/cmd/osv-scanner@latest); use
 --osv-scanner=false to skip it.
 
+Findings are also cross-referenced against CISA's Known Exploited
+Vulnerabilities (KEV) catalog by CVE ID (following aliases). A KEV match
+means the vulnerability is confirmed being exploited in the wild right now:
+the finding is flagged actively exploited, its CRA relevance score is
+forced above the Article 14 reporting threshold, and
+article14ReportRequired is set — CRA Article 14 requires manufacturers to
+report actively exploited vulnerabilities to ENISA within 24 hours. The KEV
+catalog is downloaded from CISA and cached locally, refreshed once every 24
+hours; use --kev=false to skip this check entirely.
+
 Typical pipeline:
   crasec sbom generate --target ./path -o sbom.cdx.json
   crasec vuln correlate --sbom sbom.cdx.json
@@ -53,6 +66,8 @@ func init() {
 	vulnCorrelateCmd.Flags().StringVar(&correlateSBOMPath, "sbom", "", "path to a CycloneDX SBOM to correlate")
 	vulnCorrelateCmd.Flags().StringVarP(&correlateOutput, "output", "o", "", "write findings to this file instead of stdout")
 	vulnCorrelateCmd.Flags().BoolVar(&correlateUseOSV, "osv-scanner", true, "also query OSV.dev via osv-scanner and merge results with Grype's (requires osv-scanner on PATH)")
+	vulnCorrelateCmd.Flags().BoolVar(&correlateUseKEV, "kev", true, "flag findings present in the CISA Known Exploited Vulnerabilities catalog (Article 14 trigger)")
+	vulnCorrelateCmd.Flags().StringVar(&correlateKEVCache, "kev-cache", "", "path to cache the KEV catalog at (default: ~/.crasec/cache/kev.json)")
 	if err := vulnCorrelateCmd.MarkFlagRequired("sbom"); err != nil {
 		panic(err)
 	}
@@ -73,6 +88,21 @@ func runVulnCorrelate(cmd *cobra.Command, _ []string) error {
 		findings = vulnscan.MergeFindings(grypeFindings, osvFindings)
 	}
 
+	exploitedCount := 0
+	if correlateUseKEV {
+		catalog, err := loadKEVCatalog(cmd)
+		if err != nil {
+			fmt.Fprintf(cmd.ErrOrStderr(), "warning: could not load CISA KEV catalog (%v); findings will not be checked for active exploitation\n", err)
+		} else {
+			vulnscan.ApplyKEV(findings, catalog)
+		}
+	}
+	for _, f := range findings {
+		if f.ActivelyExploited {
+			exploitedCount++
+		}
+	}
+
 	w, closeW, err := resolveCorrelateWriter(cmd)
 	if err != nil {
 		return err
@@ -86,7 +116,25 @@ func runVulnCorrelate(cmd *cobra.Command, _ []string) error {
 	}
 
 	fmt.Fprintf(cmd.ErrOrStderr(), "found %d vulnerability matches\n", len(findings))
+	if correlateUseKEV {
+		fmt.Fprintf(cmd.ErrOrStderr(), "%d ACTIVELY EXPLOITED (CISA KEV) — Article 14 report required within 24h\n", exploitedCount)
+	}
 	return nil
+}
+
+// loadKEVCatalog resolves the cache path (--kev-cache, or the default
+// ~/.crasec/cache/kev.json) and loads the CISA KEV catalog, downloading a
+// fresh copy if the cache is missing or older than 24h.
+func loadKEVCatalog(cmd *cobra.Command) (*kev.Catalog, error) {
+	cachePath := correlateKEVCache
+	if cachePath == "" {
+		var err error
+		cachePath, err = kev.DefaultCachePath()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return kev.Load(cmd.Context(), cachePath)
 }
 
 // resolveCorrelateWriter returns the io.Writer to use for findings output.
