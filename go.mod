@@ -9,6 +9,8 @@ require (
 	github.com/anchore/syft v1.46.0
 	github.com/glebarez/go-sqlite v1.22.0
 	github.com/google/go-containerregistry v0.21.7
+	github.com/google/uuid v1.6.0
+	github.com/openvex/go-vex v0.2.8
 	github.com/pandatix/go-cvss v0.6.2
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/sigstore/sigstore v1.10.8
@@ -180,7 +182,6 @@ require (
 	github.com/google/licensecheck v0.3.1 // indirect
 	github.com/google/pprof v0.0.0-20260402051712-545e8a4df936 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.15 // indirect
 	github.com/googleapis/gax-go/v2 v2.22.0 // indirect
 	github.com/gookit/color v1.6.1 // indirect
@@ -251,7 +252,6 @@ require (
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/opencontainers/runtime-spec v1.3.0 // indirect
-	github.com/openvex/go-vex v0.2.8 // indirect
 	github.com/package-url/packageurl-go v0.1.5 // indirect
 	github.com/pborman/indent v1.2.1 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
