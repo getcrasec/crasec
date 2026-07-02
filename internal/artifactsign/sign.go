@@ -72,6 +72,26 @@ func SignFile(ctx context.Context, path string) (string, error) {
 // with a fresh ephemeral keypair, and records the signature in Rekor's
 // transparency log.
 func Sign(ctx context.Context, data []byte) (*bundle.Bundle, error) {
+	return signContent(ctx, &sign.PlainData{Data: data})
+}
+
+// IntotoPayloadType is the DSSE payload type for in-toto attestations, per
+// https://github.com/in-toto/attestation.
+const IntotoPayloadType = "application/vnd.in-toto+json"
+
+// SignStatement signs statementJSON (a marshaled in-toto Statement) as a DSSE
+// envelope, using the same Fulcio/Rekor keyless flow as Sign. The resulting
+// bundle is a self-contained, independently verifiable in-toto attestation:
+// it carries the signing certificate and transparency log entry alongside
+// the signed statement.
+func SignStatement(ctx context.Context, statementJSON []byte) (*bundle.Bundle, error) {
+	return signContent(ctx, &sign.DSSEData{Data: statementJSON, PayloadType: IntotoPayloadType})
+}
+
+// signContent runs the shared Fulcio/Rekor keyless-signing flow over content.
+// Both Sign (raw artifacts) and SignStatement (in-toto/DSSE attestations)
+// route through here so every crasec artifact type signs identically.
+func signContent(ctx context.Context, content sign.Content) (*bundle.Bundle, error) {
 	idToken, err := identityToken(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("obtaining OIDC identity: %w", err)
@@ -129,7 +149,7 @@ func Sign(ctx context.Context, data []byte) (*bundle.Bundle, error) {
 		}))
 	}
 
-	pb, err := sign.Bundle(&sign.PlainData{Data: data}, keypair, opts)
+	pb, err := sign.Bundle(content, keypair, opts)
 	if err != nil {
 		return nil, fmt.Errorf("signing artifact: %w", err)
 	}

@@ -18,7 +18,13 @@ import (
 	"github.com/anchore/syft/syft/format/spdxjson"
 	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
 	"github.com/spf13/cobra"
+
+	"github.com/getcrasec/crasec/internal/ociattest"
 )
+
+// cyclonedxPredicateType is the in-toto predicate type for a CycloneDX SBOM,
+// per https://github.com/in-toto/attestation/blob/main/spec/predicates/cyclonedx.md.
+const cyclonedxPredicateType = "https://cyclonedx.org/bom"
 
 //go:embed schema/bom-1.6.schema.json
 var cdx16SchemaBytes []byte
@@ -76,6 +82,12 @@ Scan strategy:
 CycloneDX output is validated against the embedded 1.6 JSON schema before
 being written; the command exits non-zero if validation fails.
 
+Container images (--target docker:... or registry:...): after the SBOM is
+written, it is also signed as an in-toto attestation (Sigstore keyless
+signing, same identity flow as "sbom sign") and pushed to the registry as an
+OCI 1.1 referrer of the image, so any OCI-aware tool can discover it without
+a separate delivery channel.
+
 Supported target formats:
   ./path                       filesystem directory or file
   docker:myimage:tag           container image via local Docker daemon
@@ -121,7 +133,51 @@ func runGenerate(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return err
 	}
-	return writeCycloneDX16(w, bom)
+	if err := writeCycloneDX16(w, bom); err != nil {
+		return err
+	}
+
+	if isContainerTarget(target) {
+		if imageRef, ok := containerImageRef(target); ok {
+			if err := attestSBOM(ctx, imageRef, bom); err != nil {
+				return fmt.Errorf("attesting SBOM to %s: %w", imageRef, err)
+			}
+		} else {
+			fmt.Fprintf(os.Stderr, "note: skipping attestation push for %s (not a registry-hosted image reference)\n", target)
+		}
+	}
+	return nil
+}
+
+// containerImageRef strips crasec's "docker:"/"registry:" target prefixes to
+// recover the underlying registry-hosted image reference. "oci:"/"podman:"
+// targets point at local-only storage with no guaranteed registry location,
+// so they report ok=false and the caller skips the OCI referrer push.
+func containerImageRef(target string) (string, bool) {
+	for _, prefix := range []string{"docker:", "registry:"} {
+		if strings.HasPrefix(target, prefix) {
+			return strings.TrimPrefix(target, prefix), true
+		}
+	}
+	return "", false
+}
+
+// attestSBOM signs bom as an in-toto attestation over imageRef and pushes it
+// to the registry as an OCI 1.1 referrer, so the SBOM travels with the image
+// through any OCI-compatible registry without a separate delivery mechanism.
+func attestSBOM(ctx context.Context, imageRef string, bom *cyclonedx.BOM) error {
+	var buf bytes.Buffer
+	enc := cyclonedx.NewBOMEncoder(&buf, cyclonedx.BOMFileFormatJSON)
+	if err := enc.EncodeVersion(bom, cyclonedx.SpecVersion1_6); err != nil {
+		return fmt.Errorf("encoding SBOM predicate: %w", err)
+	}
+
+	fmt.Fprintf(os.Stderr, "signing and pushing in-toto attestation to %s...\n", imageRef)
+	if err := ociattest.AttestAndPush(ctx, imageRef, cyclonedxPredicateType, buf.Bytes()); err != nil {
+		return err
+	}
+	fmt.Fprintf(os.Stderr, "attestation pushed as OCI referrer of %s\n", imageRef)
+	return nil
 }
 
 // resolveWriter returns the io.Writer to use for SBOM output.
