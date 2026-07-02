@@ -10,6 +10,7 @@ import (
 
 	"github.com/getcrasec/crasec/internal/annex7"
 	"github.com/getcrasec/crasec/internal/annex7export"
+	"github.com/getcrasec/crasec/internal/pdfexport"
 )
 
 var (
@@ -84,11 +85,11 @@ func runAnnex7Export(cmd *cobra.Command, _ []string) error {
 	case "html":
 		reportBytes = html
 	case "pdf":
-		chromePath, err := annex7export.DetectChrome(chromePathOverride())
+		chromePath, err := pdfexport.DetectChrome(pdfexport.ChromePathEnvOverride(annex7ExportChromePath))
 		if err != nil {
 			return err
 		}
-		reportBytes, err = annex7export.RenderPDF(cmd.Context(), html, chromePath)
+		reportBytes, err = pdfexport.RenderPDF(cmd.Context(), html, chromePath, annex7export.Label)
 		if err != nil {
 			return err
 		}
@@ -111,11 +112,4 @@ func runAnnex7Export(cmd *cobra.Command, _ []string) error {
 		fmt.Fprintf(cmd.ErrOrStderr(), "warning: %d section(s) incomplete — highlighted in amber in the report\n", total-done)
 	}
 	return nil
-}
-
-func chromePathOverride() string {
-	if annex7ExportChromePath != "" {
-		return annex7ExportChromePath
-	}
-	return os.Getenv("CHROME_PATH")
 }

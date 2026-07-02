@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>EU Declaration of Conformity — {{.D.Product.Name}}</title>
+<style>
+  @page { size: A4; margin: 20mm 16mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    color: #1a2233;
+    font-size: 11pt;
+    line-height: 1.5;
+    margin: 0;
+  }
+  header.doc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 3px solid #1a2233;
+    padding-bottom: 14px;
+    margin-bottom: 18px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand .wordmark { font-size: 20pt; font-weight: 700; letter-spacing: -0.02em; color: #1a2233; }
+  .doc-meta { text-align: right; font-size: 9pt; color: #5a6472; }
+  .doc-meta .doc-title { font-size: 12pt; font-weight: 600; color: #1a2233; margin-bottom: 2px; }
+
+  h1.title {
+    font-size: 16pt;
+    text-align: center;
+    margin: 4px 0 2px;
+  }
+  p.subtitle {
+    text-align: center;
+    font-size: 9.5pt;
+    color: #5a6472;
+    margin: 0 0 22px;
+  }
+
+  .statement-box {
+    border: 2px solid #1a2233;
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 22px;
+  }
+
+  section.block {
+    margin-bottom: 18px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .block-title {
+    font-size: 10.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #3a4453;
+    border-bottom: 1px solid #d8dde5;
+    padding-bottom: 4px;
+    margin-bottom: 8px;
+  }
+
+  .field-row {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 10px;
+    padding: 4px 0;
+  }
+  .field-label { font-weight: 600; color: #3a4453; font-size: 9.5pt; }
+  .field-value { white-space: pre-wrap; word-break: break-word; }
+
+  ul.standards { margin: 4px 0 0; padding-left: 20px; }
+
+  .no-notified-body {
+    color: #5a6472;
+    font-style: italic;
+    font-size: 10pt;
+  }
+
+  .signature-block {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 10px;
+  }
+  .signature-line {
+    border-top: 1px solid #1a2233;
+    margin-top: 40px;
+    padding-top: 4px;
+    font-size: 9pt;
+    color: #5a6472;
+  }
+
+  footer.doc-footer { margin-top: 28px; font-size: 8pt; color: #8a94a3; }
+</style>
+</head>
+<body>
+
+<header class="doc-header">
+  <div class="brand">
+    <svg width="30" height="30" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+      <path d="M16 2 L28 7 V15 C28 23 22.5 28.5 16 30 C9.5 28.5 4 23 4 15 V7 Z"
+            fill="#1a2233"/>
+      <path d="M11 16.5 L14.5 20 L21.5 12" fill="none" stroke="#ffffff"
+            stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span class="wordmark">crasec</span>
+  </div>
+  <div class="doc-meta">
+    <div class="doc-title">EU Declaration of Conformity</div>
+    <div>Generated {{.GeneratedAt}}</div>
+  </div>
+</header>
+
+<h1 class="title">EU Declaration of Conformity</h1>
+<p class="subtitle">Issued pursuant to Regulation (EU) 2024/2847 (Cyber Resilience Act), Annex V</p>
+
+<div class="statement-box">{{.D.DeclarationStatement}}</div>
+
+<section class="block">
+  <div class="block-title">1. Manufacturer</div>
+  <div class="field-row"><div class="field-label">Name</div><div class="field-value">{{.D.Manufacturer.Name}}</div></div>
+  <div class="field-row"><div class="field-label">EU-registered address</div><div class="field-value">{{.D.Manufacturer.Address}}</div></div>
+</section>
+
+<section class="block">
+  <div class="block-title">2. Product</div>
+  <div class="field-row"><div class="field-label">Product name</div><div class="field-value">{{.D.Product.Name}}</div></div>
+  {{if .D.Product.ModelNumber}}
+  <div class="field-row"><div class="field-label">Model number</div><div class="field-value">{{.D.Product.ModelNumber}}</div></div>
+  {{end}}
+  <div class="field-row"><div class="field-label">Batch / version identifier</div><div class="field-value">{{.D.Product.BatchOrVersionIdentifier}}</div></div>
+</section>
+
+<section class="block">
+  <div class="block-title">3. Object of the Declaration</div>
+  <div class="field-value">{{.D.ObjectOfDeclaration}}</div>
+</section>
+
+<section class="block">
+  <div class="block-title">4. Standards or Specifications Applied</div>
+  {{if .D.Conformity.AssessedToAnnexIDirectly}}
+  <div class="field-value">Essential requirements of CRA Annex I assessed directly (no harmonised standards applied).</div>
+  {{else}}
+  <ul class="standards">
+    {{range .D.Conformity.Standards}}<li>{{.}}</li>{{end}}
+  </ul>
+  {{end}}
+</section>
+
+<section class="block">
+  <div class="block-title">5. Notified Body</div>
+  {{if .D.Conformity.NotifiedBodyName}}
+  <div class="field-row"><div class="field-label">Name</div><div class="field-value">{{.D.Conformity.NotifiedBodyName}}</div></div>
+  <div class="field-row"><div class="field-label">Number</div><div class="field-value">{{.D.Conformity.NotifiedBodyNumber}}</div></div>
+  {{else}}
+  <div class="no-notified-body">Not applicable — Default risk class, self-assessed.</div>
+  {{end}}
+</section>
+
+<section class="block">
+  <div class="block-title">6. Conformity Assessment Procedure</div>
+  <div class="field-value">{{.D.AssessmentProcedure}}</div>
+</section>
+
+<section class="block">
+  <div class="block-title">7. Signed For and On Behalf Of the Manufacturer</div>
+  <div class="field-row"><div class="field-label">Name</div><div class="field-value">{{.D.Signatory.Name}}</div></div>
+  <div class="field-row"><div class="field-label">Function</div><div class="field-value">{{.D.Signatory.Function}}</div></div>
+  <div class="field-row"><div class="field-label">Place</div><div class="field-value">{{.D.Signatory.Place}}</div></div>
+  <div class="field-row"><div class="field-label">Date</div><div class="field-value">{{.D.Signatory.Date}}</div></div>
+
+  <div class="signature-block">
+    <div class="signature-line">Signature</div>
+    <div class="signature-line">{{.D.Signatory.Name}}, {{.D.Signatory.Function}}</div>
+  </div>
+</section>
+
+<footer class="doc-footer">
+  Generated by crasec from the manufacturer's supplied declaration data
+  {{if .Annex7Product}}and the Annex VII technical file for "{{.Annex7Product}}"{{end}}.
+  This is a legal declaration made under the sole responsibility of the manufacturer named above.
+</footer>
+
+</body>
+</html>
