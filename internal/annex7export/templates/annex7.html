@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CRA Annex VII Technical Documentation — {{.Product}}</title>
+<style>
+  @page { size: A4; margin: 20mm 16mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    color: #1a2233;
+    font-size: 11pt;
+    line-height: 1.45;
+    margin: 0;
+  }
+  header.doc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 3px solid #1a2233;
+    padding-bottom: 14px;
+    margin-bottom: 18px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand svg { display: block; }
+  .brand .wordmark { font-size: 20pt; font-weight: 700; letter-spacing: -0.02em; color: #1a2233; }
+  .doc-meta { text-align: right; font-size: 9pt; color: #5a6472; }
+  .doc-meta .doc-title { font-size: 12pt; font-weight: 600; color: #1a2233; margin-bottom: 2px; }
+
+  .summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f3f5f8;
+    border: 1px solid #d8dde5;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 22px;
+  }
+  .summary .product { font-size: 13pt; font-weight: 600; }
+  .summary .completion { font-size: 10pt; font-weight: 600; }
+  .completion.complete { color: #1a7a3d; }
+  .completion.incomplete { color: #a25c00; }
+  .progress-track {
+    width: 160px;
+    height: 8px;
+    background: #dfe4ea;
+    border-radius: 4px;
+    overflow: hidden;
+    display: inline-block;
+    margin-left: 10px;
+    vertical-align: middle;
+  }
+  .progress-fill { height: 100%; background: #1a7a3d; }
+
+  section.doc-section {
+    border: 1px solid #d8dde5;
+    border-radius: 8px;
+    margin-bottom: 14px;
+    padding: 14px 16px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  section.doc-section.incomplete { border-color: #f0b429; background: #fffaf0; }
+
+  .section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .section-title { font-size: 12pt; font-weight: 700; }
+  .section-number {
+    display: inline-block;
+    min-width: 20px;
+    text-align: center;
+    background: #1a2233;
+    color: #fff;
+    border-radius: 4px;
+    padding: 1px 7px;
+    margin-right: 8px;
+    font-size: 10pt;
+  }
+  .status-pill {
+    font-size: 8.5pt;
+    font-weight: 600;
+    border-radius: 999px;
+    padding: 2px 10px;
+    white-space: nowrap;
+  }
+  .status-pill.complete { background: #e3f5e9; color: #1a7a3d; }
+  .status-pill.incomplete { background: #fdecc8; color: #8a5a00; }
+
+  .field-row {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 10px;
+    padding: 6px 0;
+    border-top: 1px solid #edf0f4;
+  }
+  .field-row:first-of-type { border-top: none; }
+  .field-label { font-weight: 600; color: #3a4453; font-size: 9.5pt; }
+  .field-value { white-space: pre-wrap; word-break: break-word; }
+  .field-value.empty {
+    color: #8a5a00;
+    background: #fdecc8;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-style: italic;
+    display: inline-block;
+  }
+
+  footer.doc-footer { margin-top: 24px; font-size: 8pt; color: #8a94a3; }
+</style>
+</head>
+<body>
+
+<header class="doc-header">
+  <div class="brand">
+    <svg width="30" height="30" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+      <path d="M16 2 L28 7 V15 C28 23 22.5 28.5 16 30 C9.5 28.5 4 23 4 15 V7 Z"
+            fill="#1a2233"/>
+      <path d="M11 16.5 L14.5 20 L21.5 12" fill="none" stroke="#ffffff"
+            stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span class="wordmark">crasec</span>
+  </div>
+  <div class="doc-meta">
+    <div class="doc-title">CRA Annex VII — Technical Documentation</div>
+    <div>Generated {{.GeneratedAt}}</div>
+  </div>
+</header>
+
+<div class="summary">
+  <div class="product">Product: {{.Product}}</div>
+  <div class="completion {{if eq .Done .Total}}complete{{else}}incomplete{{end}}">
+    {{.Done}}/{{.Total}} sections complete
+    <span class="progress-track"><span class="progress-fill" style="width: {{.PercentComplete}}%;"></span></span>
+  </div>
+</div>
+
+{{range .Sections}}
+<section class="doc-section {{if not .Complete}}incomplete{{end}}">
+  <div class="section-head">
+    <div class="section-title"><span class="section-number">{{.Number}}</span>{{.Title}}</div>
+    {{if .Complete}}
+      <span class="status-pill complete">COMPLETE</span>
+    {{else}}
+      <span class="status-pill incomplete">⚠ INCOMPLETE</span>
+    {{end}}
+  </div>
+  {{range .Fields}}
+  <div class="field-row">
+    <div class="field-label">{{.Label}}</div>
+    {{if .Empty}}
+      <div class="field-value empty">Not provided</div>
+    {{else}}
+      <div class="field-value">{{.Value}}</div>
+    {{end}}
+  </div>
+  {{end}}
+</section>
+{{end}}
+
+<footer class="doc-footer">
+  This document was generated by crasec from the manufacturer's Annex VII technical file
+  and reflects its state as of the generation timestamp above. Sections marked
+  INCOMPLETE do not yet satisfy CRA Annex VII's minimum documentation requirements.
+</footer>
+
+</body>
+</html>
