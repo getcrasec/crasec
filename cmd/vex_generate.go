@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
+	"text/tabwriter"
 
 	cyclonedx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/spf13/cobra"
@@ -17,6 +19,7 @@ import (
 var (
 	vexFindingsPath   string
 	vexStatementsPath string
+	vexFromFilePath   string
 	vexSBOMPath       string
 	vexDraftPath      string
 	vexOutput         string
@@ -41,33 +44,61 @@ Product metadata (name/version/purl) is read from --sbom's metadata.component
 when given; --product-name/--product-version/--product-purl override it, and
 --product-name is required if --sbom isn't given.
 
-Triage decisions can come from two places:
+Triage decisions can come from three places (pick one):
 
-  --statements <file>   non-interactive: a JSON array of pre-made decisions,
-                         keyed by vulnerability ID. No prompts.
+  --from-file <decisions.yaml>   non-interactive, CI-friendly: a
+                                  version-controlled YAML file of decisions,
+                                  keyed by CVE. If any finding in --findings
+                                  has no matching entry, the command prints
+                                  the untriaged findings and exits non-zero
+                                  instead of generating a document — a new
+                                  CVE must get a human decision, checked into
+                                  the decisions file, before the pipeline can
+                                  proceed. Format:
 
-  (omitted)              interactive: an in-terminal triage session walks
-                         through each finding, asking for a status and the
-                         fields that status requires:
+                                    - cve: CVE-2024-XXXXX
+                                      component: log4j-core@2.14.1   # informational
+                                      status: not_affected
+                                      justification: vulnerable_code_not_present
+                                      notes: "why this doesn't apply"
+                                    - cve: CVE-2023-YYYYY
+                                      status: fixed
+                                      fixed_version: "1.6.0"
 
-                           not_affected          justification code + optional notes
-                           affected               action statement (required)
-                           fixed                  fixed version (required)
-                           under_investigation    deadline is auto-set 60 days out
+  --statements <file>            non-interactive: a JSON array of pre-made
+                                  decisions, keyed by vulnerability ID.
+                                  Findings with no matching entry silently
+                                  default to under_investigation — use
+                                  --from-file instead if you want missing
+                                  decisions to block the run.
 
-                         Progress is saved to --draft (default
-                         .crasec-vex-draft.json) after every confirmed
-                         finding, so a long session can be resumed by
-                         rerunning the same command — already-triaged
-                         findings won't be asked again. Press 'q' at any
-                         point to save and quit; rerun later to pick up
-                         where you left off. The VEX document is only
-                         written once every finding has a decision.
+  (neither given)                 interactive: an in-terminal triage session
+                                  walks through each finding, asking for a
+                                  status and the fields that status requires:
+
+                                    not_affected          justification code + optional notes
+                                    affected               action statement (required)
+                                    fixed                  fixed version (required)
+                                    under_investigation    deadline is auto-set 60 days out
+
+                                  Progress is saved to --draft (default
+                                  .crasec-vex-draft.json) after every
+                                  confirmed finding, so a long session can be
+                                  resumed by rerunning the same command —
+                                  already-triaged findings won't be asked
+                                  again. Press 'q' at any point to save and
+                                  quit; rerun later to pick up where you left
+                                  off. The VEX document is only written once
+                                  every finding has a decision.
 
 Typical pipeline:
   crasec sbom generate --target ./path -o sbom.cdx.json
   crasec vuln correlate --sbom sbom.cdx.json -o findings.json
-  crasec vex generate --sbom sbom.cdx.json --findings findings.json`,
+  crasec vex generate --sbom sbom.cdx.json --findings findings.json
+
+CI pipeline:
+  crasec vex generate --sbom sbom.cdx.json --findings findings.json \
+    --from-file vex-decisions.yaml -o vex.cdx.json`,
 	RunE: runVexGenerate,
 }
 
@@ -76,6 +107,7 @@ func init() {
 	vexGenerateCmd.Flags().StringVar(&vexFindingsPath, "findings", "", "path to findings JSON produced by \"crasec vuln correlate\"")
 	vexGenerateCmd.Flags().StringVar(&vexSBOMPath, "sbom", "", "path to the CycloneDX SBOM the findings were correlated against (used for product metadata)")
 	vexGenerateCmd.Flags().StringVar(&vexStatementsPath, "statements", "", "path to a JSON array of pre-made triage decisions (skips the interactive TUI)")
+	vexGenerateCmd.Flags().StringVar(&vexFromFilePath, "from-file", "", "path to a version-controlled YAML decisions file; exits non-zero if any finding lacks a decision (CI pipelines)")
 	vexGenerateCmd.Flags().StringVar(&vexDraftPath, "draft", "", "where interactive triage progress is saved/resumed (default: .crasec-vex-draft.json)")
 	vexGenerateCmd.Flags().StringVarP(&vexOutput, "output", "o", "", "write the VEX document to this file instead of stdout")
 	vexGenerateCmd.Flags().StringVar(&vexProductName, "product-name", "", "name of the product this VEX document is about (default: --sbom's metadata.component.name)")
@@ -88,6 +120,15 @@ func init() {
 }
 
 func runVexGenerate(cmd *cobra.Command, _ []string) error {
+	// Errors past this point are about input data (missing findings,
+	// incomplete triage, invalid decisions), not CLI misuse, so a cobra
+	// flag-usage dump would just be noise — especially in CI logs.
+	cmd.SilenceUsage = true
+
+	if vexFromFilePath != "" && vexStatementsPath != "" {
+		return fmt.Errorf("--from-file and --statements are mutually exclusive; pick one")
+	}
+
 	findings, err := loadFindings(vexFindingsPath)
 	if err != nil {
 		return err
@@ -99,12 +140,18 @@ func runVexGenerate(cmd *cobra.Command, _ []string) error {
 	}
 
 	var statements map[string]vex.Statement
-	if vexStatementsPath != "" {
+	switch {
+	case vexFromFilePath != "":
+		statements, err = loadBulkDecisions(cmd, vexFromFilePath, findings)
+		if err != nil {
+			return err
+		}
+	case vexStatementsPath != "":
 		statements, err = loadVEXStatements(vexStatementsPath)
 		if err != nil {
 			return err
 		}
-	} else {
+	default:
 		var completed bool
 		statements, completed, err = vextriage.Run(findings, vexDraftPath)
 		if err != nil {
@@ -206,6 +253,68 @@ func loadFindings(path string) ([]vulnscan.Finding, error) {
 		return nil, fmt.Errorf("parsing findings %s: %w", path, err)
 	}
 	return findings, nil
+}
+
+// loadBulkDecisions loads a --from-file YAML decisions file and enforces
+// the CI-pipeline gate: every finding must have a matching decision, or the
+// command reports the gap and fails rather than silently generating an
+// incomplete VEX document. Decisions whose recorded component no longer
+// matches any current finding for that CVE are flagged as a non-fatal
+// warning, since the component may have moved on since the decision was
+// made.
+func loadBulkDecisions(cmd *cobra.Command, path string, findings []vulnscan.Finding) (map[string]vex.Statement, error) {
+	decisions, statements, err := vex.LoadDecisionsFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	if stale := vex.StaleDecisions(decisions, findings); len(stale) > 0 {
+		fmt.Fprintf(cmd.ErrOrStderr(), "warning: %d decision(s) in %s reference a component that no longer matches current findings (may be stale):\n", len(stale), path)
+		for _, d := range stale {
+			fmt.Fprintf(cmd.ErrOrStderr(), "  %s (recorded against %s)\n", d.CVE, d.Component)
+		}
+	}
+
+	missing := untriagedFindings(findings, statements)
+	if len(missing) > 0 {
+		fmt.Fprintf(cmd.ErrOrStderr(), "%d finding(s) not covered by %s:\n", len(missing), path)
+		printUntriagedTable(cmd.ErrOrStderr(), missing)
+		return nil, fmt.Errorf("add a decision for each finding above to %s and rerun", path)
+	}
+
+	return statements, nil
+}
+
+// untriagedFindings returns one representative finding per vulnerability ID
+// present in findings but absent from statements, sorted by CRA relevance
+// score descending (most urgent first).
+func untriagedFindings(findings []vulnscan.Finding, statements map[string]vex.Statement) []vulnscan.Finding {
+	seen := map[string]bool{}
+	var missing []vulnscan.Finding
+	for _, f := range findings {
+		if _, ok := statements[f.VulnerabilityID]; ok {
+			continue
+		}
+		if seen[f.VulnerabilityID] {
+			continue
+		}
+		seen[f.VulnerabilityID] = true
+		missing = append(missing, f)
+	}
+	sort.SliceStable(missing, func(i, j int) bool {
+		return missing[i].CRARelevanceScore > missing[j].CRARelevanceScore
+	})
+	return missing
+}
+
+func printUntriagedTable(w io.Writer, findings []vulnscan.Finding) {
+	tw := tabwriter.NewWriter(w, 0, 4, 2, ' ', 0)
+	fmt.Fprintln(tw, "VULNERABILITY\tCOMPONENT\tCVSS\tCRA SCORE\tCATEGORY")
+	for _, f := range findings {
+		fmt.Fprintf(tw, "%s\t%s@%s\t%.1f\t%.2f\t%s\n",
+			f.VulnerabilityID, f.PackageName, f.PackageVersion, f.CVSSScore, f.CRARelevanceScore, f.CRACategory)
+	}
+	tw.Flush()
 }
 
 // loadVEXStatements reads a JSON array of triage decisions and indexes them
