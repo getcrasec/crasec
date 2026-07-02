@@ -58,6 +58,14 @@ type Statement struct {
 	// which triage will conclude. Must be no more than
 	// MaxUnderInvestigationDeadline out.
 	Deadline *time.Time `json:"deadline,omitempty"`
+
+	// Notes is free-text supplementary context that doesn't fit any of the
+	// OpenVEX-mandated fields above (e.g. extra detail on an "affected" or
+	// "under_investigation" statement, where the OpenVEX spec forbids
+	// setting ActionStatement/ImpactStatement). It isn't validated by
+	// go-vex and is emitted as a CycloneDX property rather than part of the
+	// analysis block proper.
+	Notes string `json:"notes,omitempty"`
 }
 
 // Validate checks that the statement satisfies the OpenVEX spec's
@@ -267,12 +275,18 @@ func toVulnerability(f vulnscan.Finding, stmt Statement, refs []string, now time
 		affects = append(affects, cyclonedx.Affects{Ref: ref})
 	}
 
+	var properties *[]cyclonedx.Property
+	if stmt.Notes != "" {
+		properties = &[]cyclonedx.Property{{Name: "crasec:notes", Value: stmt.Notes}}
+	}
+
 	return cyclonedx.Vulnerability{
-		BOMRef:   fmt.Sprintf("vuln-%s", f.VulnerabilityID),
-		ID:       f.VulnerabilityID,
-		Ratings:  ratings,
-		Analysis: analysis,
-		Affects:  &affects,
+		BOMRef:     fmt.Sprintf("vuln-%s", f.VulnerabilityID),
+		ID:         f.VulnerabilityID,
+		Ratings:    ratings,
+		Analysis:   analysis,
+		Affects:    &affects,
+		Properties: properties,
 	}, nil
 }
 
