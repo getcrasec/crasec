@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/getcrasec/crasec/internal/bundle"
+	"github.com/getcrasec/crasec/internal/config"
 )
 
 var (
@@ -58,7 +59,7 @@ func init() {
 
 	defaults := bundle.DefaultOptions("")
 
-	bundleExportCmd.Flags().StringVar(&bundleProduct, "product", "", "product identifier, recorded in manifest.json and README.txt (required)")
+	bundleExportCmd.Flags().StringVar(&bundleProduct, "product", "", "product identifier, recorded in manifest.json and README.txt (default: .crasec.yaml's product.name, from \"crasec init\")")
 	bundleExportCmd.Flags().StringVarP(&bundleOutput, "output", "o", defaults.Output, "path for the resulting ZIP")
 
 	bundleExportCmd.Flags().StringVar(&bundleSBOM, "sbom", defaults.SBOM, "path to the signed SBOM")
@@ -76,6 +77,9 @@ func init() {
 	if err := bundleExportCmd.MarkFlagRequired("product"); err != nil {
 		panic(err)
 	}
+	bundleExportCmd.PreRunE = applyConfigDefaults(map[string]func(*config.Config) string{
+		"product": func(c *config.Config) string { return c.Product.Name },
+	})
 }
 
 func runBundleExport(cmd *cobra.Command, _ []string) error {

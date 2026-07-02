@@ -10,6 +10,7 @@ import (
 
 	"github.com/getcrasec/crasec/internal/annex7"
 	"github.com/getcrasec/crasec/internal/artifactsign"
+	"github.com/getcrasec/crasec/internal/config"
 	"github.com/getcrasec/crasec/internal/doc"
 	"github.com/getcrasec/crasec/internal/eudoc"
 	"github.com/getcrasec/crasec/internal/eudocexport"
@@ -87,7 +88,7 @@ available). Pass --sign to also Sigstore-sign both files immediately
 func init() {
 	docCmd.AddCommand(docGenerateCmd)
 
-	docGenerateCmd.Flags().StringVar(&docProduct, "product", "", "product identifier, e.g. myapp (required)")
+	docGenerateCmd.Flags().StringVar(&docProduct, "product", "", "product identifier, e.g. myapp (default: .crasec.yaml's product.name, from \"crasec init\")")
 	docGenerateCmd.Flags().StringVar(&docAnnex7, "annex7", "", "path to the Annex VII technical file (default: annex7-<product>.json)")
 	docGenerateCmd.Flags().StringVarP(&docOutput, "output", "o", "eu-doc.json", "path for the machine-readable declaration")
 	docGenerateCmd.Flags().StringVar(&docPDF, "pdf", "eu-doc.pdf", "path for the human-readable PDF")
@@ -96,8 +97,8 @@ func init() {
 	docGenerateCmd.Flags().BoolVar(&docSign, "sign", false, "Sigstore-sign both outputs immediately after writing them")
 	docGenerateCmd.Flags().StringVar(&docLanguages, "languages", "en", "comma-separated EU language codes (ISO 639-1) for the declaration statement, or \"all\"")
 
-	docGenerateCmd.Flags().StringVar(&docManufacturerName, "manufacturer-name", "", "manufacturer name (required)")
-	docGenerateCmd.Flags().StringVar(&docManufacturerAddress, "manufacturer-address", "", "manufacturer's EU-registered address (required)")
+	docGenerateCmd.Flags().StringVar(&docManufacturerName, "manufacturer-name", "", "manufacturer name (default: .crasec.yaml's manufacturer.name, from \"crasec init\")")
+	docGenerateCmd.Flags().StringVar(&docManufacturerAddress, "manufacturer-address", "", "manufacturer's EU-registered address (default: .crasec.yaml's manufacturer.address, from \"crasec init\")")
 	docGenerateCmd.Flags().StringVar(&docModelNumber, "model-number", "", "product model number, if applicable")
 	docGenerateCmd.Flags().StringVar(&docBatchVersion, "batch-version", "", "batch/version identifier (default: --annex7's product version)")
 	docGenerateCmd.Flags().StringVar(&docObject, "object", "", "object of declaration (default: composed from --annex7's product description)")
@@ -117,6 +118,11 @@ func init() {
 			panic(err)
 		}
 	}
+	docGenerateCmd.PreRunE = applyConfigDefaults(map[string]func(*config.Config) string{
+		"product":              func(c *config.Config) string { return c.Product.Name },
+		"manufacturer-name":    func(c *config.Config) string { return c.Manufacturer.Name },
+		"manufacturer-address": func(c *config.Config) string { return c.Manufacturer.Address },
+	})
 }
 
 func runDocGenerate(cmd *cobra.Command, _ []string) error {

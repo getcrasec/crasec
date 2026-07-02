@@ -19,6 +19,7 @@ import (
 	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
 	"github.com/spf13/cobra"
 
+	"github.com/getcrasec/crasec/internal/config"
 	"github.com/getcrasec/crasec/internal/ociattest"
 )
 
@@ -49,8 +50,8 @@ const (
 // can produce richer build-time dependency data than syft's filesystem scan.
 var cdxgenManifests = []string{
 	"package-lock.json", "yarn.lock", "pnpm-lock.yaml", // npm / Node.js
-	"pom.xml",                                            // Maven
-	"build.gradle", "build.gradle.kts",                  // Gradle
+	"pom.xml",                          // Maven
+	"build.gradle", "build.gradle.kts", // Gradle
 	"Cargo.lock",                                         // Rust / Cargo
 	"requirements.txt", "pyproject.toml", "Pipfile.lock", // Python
 	"Gemfile.lock",    // Ruby
@@ -97,12 +98,15 @@ Supported target formats:
 
 func init() {
 	sbomCmd.AddCommand(sbomGenerateCmd)
-	sbomGenerateCmd.Flags().StringVar(&generateTarget, "target", "", "scan target: ./path, docker:image:tag, or https://github.com/org/repo")
+	sbomGenerateCmd.Flags().StringVar(&generateTarget, "target", "", "scan target: ./path, docker:image:tag, or https://github.com/org/repo (default: .crasec.yaml's scan.target, from \"crasec init\")")
 	sbomGenerateCmd.Flags().StringVar(&generateFormat, "format", formatCycloneDX, `output format: "cyclonedx" (default) or "spdx"`)
 	sbomGenerateCmd.Flags().StringVarP(&generateOutput, "output", "o", "", "write SBOM to this file instead of stdout")
 	if err := sbomGenerateCmd.MarkFlagRequired("target"); err != nil {
 		panic(err)
 	}
+	sbomGenerateCmd.PreRunE = applyConfigDefaults(map[string]func(*config.Config) string{
+		"target": func(c *config.Config) string { return c.Scan.Target },
+	})
 }
 
 func runGenerate(cmd *cobra.Command, _ []string) error {
