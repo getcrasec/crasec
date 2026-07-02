@@ -59,11 +59,17 @@ type Finding struct {
 	KEVDateAdded      string `json:"kevDateAdded,omitempty"`
 	KEVDueDate        string `json:"kevDueDate,omitempty"`
 
-	// CRARelevanceScore is a 0-100 triage heuristic (not a certified
-	// compliance score): CVSS base score scaled to 0-100, forced to 100 on
-	// a KEV match. Article14ReportRequired is set once it crosses
-	// Article14Threshold, which a KEV match always does.
+	// EPSSScore is the FIRST.org EPSS probability (0-1) that this
+	// vulnerability is exploited in the wild in the next 30 days; 0 if
+	// EPSS has no score for it or EPSS data wasn't fetched this run.
+	//
+	// CRARelevanceScore = CVSSScore × KEVMultiplier × EPSSWeight (see
+	// ApplyCRAScore in cra_score.go for the exact formula/thresholds).
+	// CRACategory buckets that score into CRA-CRITICAL/MONITOR/LOW, and
+	// Article14ReportRequired is set iff CRACategory is CRA-CRITICAL.
+	EPSSScore               float64 `json:"epssScore,omitempty"`
 	CRARelevanceScore       float64 `json:"craRelevanceScore"`
+	CRACategory             string  `json:"craCategory"`
 	Article14ReportRequired bool    `json:"article14ReportRequired"`
 
 	// EUVD fields, populated when the finding is cross-referenced against

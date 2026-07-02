@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
+	"text/tabwriter"
 
 	"github.com/spf13/cobra"
 
+	"github.com/getcrasec/crasec/internal/epss"
 	"github.com/getcrasec/crasec/internal/euvd"
 	"github.com/getcrasec/crasec/internal/kev"
 	"github.com/getcrasec/crasec/internal/vulnscan"
@@ -20,6 +23,7 @@ var (
 	correlateUseKEV   bool
 	correlateKEVCache string
 	correlateUseEUVD  bool
+	correlateUseEPSS  bool
 )
 
 var vulnCorrelateCmd = &cobra.Command{
@@ -42,14 +46,27 @@ PATH (go install github.com/google/osv-scanner/cmd/osv-scanner@latest); use
 --osv-scanner=false to skip it.
 
 Findings are also cross-referenced against CISA's Known Exploited
-Vulnerabilities (KEV) catalog by CVE ID (following aliases). A KEV match
-means the vulnerability is confirmed being exploited in the wild right now:
-the finding is flagged actively exploited, its CRA relevance score is
-forced above the Article 14 reporting threshold, and
-article14ReportRequired is set — CRA Article 14 requires manufacturers to
-report actively exploited vulnerabilities to ENISA within 24 hours. The KEV
-catalog is downloaded from CISA and cached locally, refreshed once every 24
-hours; use --kev=false to skip this check entirely.
+Vulnerabilities (KEV) catalog by CVE ID (following aliases), flagging
+confirmed active exploitation, and against FIRST.org's EPSS API for a
+30-day exploitation-probability score. Together with CVSS these feed the
+CRA-relevance formula that is the reason this tool exists rather than a
+generic scanner:
+
+  CRA Score = CVSS Base Score × KEV Multiplier × EPSS Weight
+
+  KEV Multiplier: 2.0 if actively exploited (in CISA KEV), else 1.0
+  EPSS Weight:    1.5 if EPSS probability > 0.7, else 1.0
+
+  > 14      CRA-CRITICAL  Article 14 trigger: report to ENISA within 24h
+  7 - 14    MONITOR       track, no immediate reporting
+  < 7       LOW           document in VEX, no action required
+
+Findings are sorted by CRA score descending, both in the JSON output and in
+the human-readable table printed to stderr (CRA-CRITICAL rows highlighted
+in red when stderr is a terminal). Use --kev=false / --epss=false to skip
+either input (the corresponding multiplier/weight then defaults to 1.0
+rather than the finding being skipped). The KEV catalog is downloaded from
+CISA and cached locally, refreshed once every 24 hours.
 
 Pass --enable-euvd to also cross-reference findings against ENISA's own EU
 Vulnerability Database (EUVD) — the CRA's authoritative vulnerability
@@ -82,6 +99,7 @@ func init() {
 	vulnCorrelateCmd.Flags().BoolVar(&correlateUseKEV, "kev", true, "flag findings present in the CISA Known Exploited Vulnerabilities catalog (Article 14 trigger)")
 	vulnCorrelateCmd.Flags().StringVar(&correlateKEVCache, "kev-cache", "", "path to cache the KEV catalog at (default: ~/.crasec/cache/kev.json)")
 	vulnCorrelateCmd.Flags().BoolVar(&correlateUseEUVD, "enable-euvd", false, "cross-reference findings against ENISA's EU Vulnerability Database (beta API; off by default)")
+	vulnCorrelateCmd.Flags().BoolVar(&correlateUseEPSS, "epss", true, "fetch EPSS exploitation-probability scores from FIRST.org for CRA-relevance scoring")
 	if err := vulnCorrelateCmd.MarkFlagRequired("sbom"); err != nil {
 		panic(err)
 	}
@@ -102,7 +120,6 @@ func runVulnCorrelate(cmd *cobra.Command, _ []string) error {
 		findings = vulnscan.MergeFindings(grypeFindings, osvFindings)
 	}
 
-	exploitedCount := 0
 	if correlateUseKEV {
 		catalog, err := loadKEVCatalog(cmd)
 		if err != nil {
@@ -111,11 +128,17 @@ func runVulnCorrelate(cmd *cobra.Command, _ []string) error {
 			vulnscan.ApplyKEV(findings, catalog)
 		}
 	}
-	for _, f := range findings {
-		if f.ActivelyExploited {
-			exploitedCount++
+
+	epssScores := map[string]float64{}
+	if correlateUseEPSS {
+		scores, err := epss.NewClient().FetchScores(cmd.Context(), collectVulnerabilityIDs(findings))
+		if err != nil {
+			fmt.Fprintf(cmd.ErrOrStderr(), "warning: EPSS unavailable (%v); CRA scoring will use the default EPSS weight\n", err)
+		} else {
+			epssScores = scores
 		}
 	}
+	vulnscan.ApplyCRAScore(findings, epssScores)
 
 	disagreementCount := 0
 	if correlateUseEUVD {
@@ -129,6 +152,10 @@ func runVulnCorrelate(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
+	sort.SliceStable(findings, func(i, j int) bool {
+		return findings[i].CRARelevanceScore > findings[j].CRARelevanceScore
+	})
+
 	w, closeW, err := resolveCorrelateWriter(cmd)
 	if err != nil {
 		return err
@@ -141,14 +168,84 @@ func runVulnCorrelate(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("encoding findings: %w", err)
 	}
 
-	fmt.Fprintf(cmd.ErrOrStderr(), "found %d vulnerability matches\n", len(findings))
-	if correlateUseKEV {
-		fmt.Fprintf(cmd.ErrOrStderr(), "%d ACTIVELY EXPLOITED (CISA KEV) — Article 14 report required within 24h\n", exploitedCount)
+	criticalCount := 0
+	for _, f := range findings {
+		if f.Article14ReportRequired {
+			criticalCount++
+		}
 	}
+
+	fmt.Fprintf(cmd.ErrOrStderr(), "found %d vulnerability matches\n", len(findings))
+	fmt.Fprintf(cmd.ErrOrStderr(), "%d CRA-CRITICAL — Article 14 report required within 24h\n", criticalCount)
 	if correlateUseEUVD && disagreementCount > 0 {
 		fmt.Fprintf(cmd.ErrOrStderr(), "%d finding(s) where EUVD and NVD/OSV disagree on severity by 1.0+ (see severityDisagreement)\n", disagreementCount)
 	}
+	if len(findings) > 0 {
+		printFindingsTable(cmd.ErrOrStderr(), findings)
+	}
 	return nil
+}
+
+// collectVulnerabilityIDs gathers every vulnerability ID and alias across
+// findings, for a single batched EPSS lookup instead of one per finding.
+func collectVulnerabilityIDs(findings []vulnscan.Finding) []string {
+	ids := make([]string, 0, len(findings)*2)
+	for _, f := range findings {
+		ids = append(ids, f.VulnerabilityID)
+		ids = append(ids, f.AliasIDs...)
+	}
+	return ids
+}
+
+const (
+	ansiRed   = "\x1b[31m"
+	ansiReset = "\x1b[0m"
+)
+
+// printFindingsTable renders findings (assumed already sorted by CRA score
+// descending) as a human-readable table, with the category column
+// highlighted in red for Article 14 triggers when w is a terminal. This is
+// purely a presentation aid alongside the JSON output written elsewhere,
+// which remains the structured contract for downstream tooling.
+func printFindingsTable(w io.Writer, findings []vulnscan.Finding) {
+	colorize := isTerminal(w)
+
+	tw := tabwriter.NewWriter(w, 0, 4, 2, ' ', 0)
+	fmt.Fprintln(tw, "VULNERABILITY\tPACKAGE\tCVSS\tKEV\tEPSS\tCRA SCORE\tCATEGORY")
+	for _, f := range findings {
+		kevMark := "-"
+		if f.ActivelyExploited {
+			kevMark = "YES"
+		}
+
+		category := f.CRACategory
+		if f.Article14ReportRequired {
+			category += " (ARTICLE 14)"
+			if colorize {
+				category = ansiRed + category + ansiReset
+			}
+		}
+
+		fmt.Fprintf(tw, "%s\t%s@%s\t%.1f\t%s\t%.2f\t%.2f\t%s\n",
+			f.VulnerabilityID, f.PackageName, f.PackageVersion,
+			f.CVSSScore, kevMark, f.EPSSScore, f.CRARelevanceScore, category)
+	}
+	tw.Flush()
+}
+
+// isTerminal reports whether w is a character device (a terminal), so
+// printFindingsTable only emits ANSI color codes when a human is likely to
+// be looking at the output, not when stderr is redirected to a file/pipe.
+func isTerminal(w io.Writer) bool {
+	f, ok := w.(*os.File)
+	if !ok {
+		return false
+	}
+	info, err := f.Stat()
+	if err != nil {
+		return false
+	}
+	return info.Mode()&os.ModeCharDevice != 0
 }
 
 // loadKEVCatalog resolves the cache path (--kev-cache, or the default
