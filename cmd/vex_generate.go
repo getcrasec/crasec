@@ -11,6 +11,7 @@ import (
 	cyclonedx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/spf13/cobra"
 
+	"github.com/getcrasec/crasec/internal/sbomgen"
 	"github.com/getcrasec/crasec/internal/vex"
 	"github.com/getcrasec/crasec/internal/vextriage"
 	"github.com/getcrasec/crasec/internal/vulnscan"
@@ -178,7 +179,7 @@ func runVexGenerate(cmd *cobra.Command, _ []string) error {
 	}
 	defer closeW()
 
-	if err := writeCycloneDX16(w, bom); err != nil {
+	if err := sbomgen.WriteCycloneDX16(w, bom); err != nil {
 		return err
 	}
 

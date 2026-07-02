@@ -1,0 +1,10 @@
+{
+  "name": "vulnerable-node-app",
+  "version": "1.0.0",
+  "description": "Demo fixture for crasec's terminal demo — intentionally pinned to older dependency versions with known CVEs.",
+  "dependencies": {
+    "express": "4.17.1",
+    "lodash": "4.17.15",
+    "minimist": "0.0.8"
+  }
+}

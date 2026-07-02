@@ -30,3 +30,9 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+# README demo GIF recording — one-time-prepared artifacts and scratch
+# working directory (see demo/README.md); demo.gif itself is committed once
+# recorded, so it's intentionally not ignored here.
+demo/.seed/
+demo/.work/
