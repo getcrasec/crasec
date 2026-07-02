@@ -24,12 +24,19 @@ import (
 // install would use, avoiding a redundant download.
 var dbIdentification = clio.Identification{Name: "grype"}
 
+// Names used in Finding.Scanners to identify which tool reported a finding.
+const (
+	ScannerGrype = "grype"
+	ScannerOSV   = "osv-scanner"
+)
+
 // Finding is one matched vulnerability/component pair, scoped to exactly the
 // fields needed by VEX triage and the ENISA report workflow: identity of the
 // vulnerability and affected component, its severity/CVSS, whether a fix is
 // available, and where the data came from.
 type Finding struct {
-	VulnerabilityID string   `json:"vulnerabilityId"` // e.g. CVE-2023-12345 or GHSA-....
+	VulnerabilityID string   `json:"vulnerabilityId"`    // e.g. CVE-2023-12345 or GHSA-....
+	AliasIDs        []string `json:"aliasIds,omitempty"` // other IDs (GHSA, OSV, etc.) known to refer to the same vulnerability
 	PackageName     string   `json:"packageName"`
 	PackageVersion  string   `json:"packageVersion"`
 	PackagePURL     string   `json:"packagePurl,omitempty"`
@@ -39,6 +46,10 @@ type Finding struct {
 	FixVersions     []string `json:"fixVersions,omitempty"`
 	FixState        string   `json:"fixState"`
 	DataSource      string   `json:"dataSource,omitempty"`
+	// Scanners lists which tool(s) reported this finding (e.g. "grype",
+	// "osv-scanner"), for auditability once findings from multiple scanners
+	// have been merged.
+	Scanners []string `json:"scanners,omitempty"`
 }
 
 // Correlate matches the CycloneDX SBOM at sbomPath against Grype's
@@ -92,6 +103,7 @@ func toFinding(m match.Match, metadataProvider vulnerability.MetadataProvider) (
 		PackagePURL:     m.Package.PURL,
 		FixVersions:     m.Vulnerability.Fix.Versions,
 		FixState:        string(m.Vulnerability.Fix.State),
+		Scanners:        []string{ScannerGrype},
 	}
 
 	// vulnerability.Vulnerability should always carry Metadata, but fall back

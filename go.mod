@@ -9,6 +9,7 @@ require (
 	github.com/anchore/syft v1.46.0
 	github.com/glebarez/go-sqlite v1.22.0
 	github.com/google/go-containerregistry v0.21.7
+	github.com/pandatix/go-cvss v0.6.2
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/sigstore/sigstore v1.10.8
 	github.com/sigstore/sigstore-go v1.2.1
@@ -252,7 +253,6 @@ require (
 	github.com/opencontainers/runtime-spec v1.3.0 // indirect
 	github.com/openvex/go-vex v0.2.8 // indirect
 	github.com/package-url/packageurl-go v0.1.5 // indirect
-	github.com/pandatix/go-cvss v0.6.2 // indirect
 	github.com/pborman/indent v1.2.1 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.3.1 // indirect
