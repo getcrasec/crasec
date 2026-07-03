@@ -20,7 +20,7 @@ jobs:
 
       - run: go test -race -coverprofile=coverage.out ./...
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
           name: coverage
           path: coverage.out
@@ -37,7 +37,7 @@ jobs:
           # golangci-lint-action manages its own cache
           cache: false
 
-      - uses: golangci/golangci-lint-action@v7
+      - uses: golangci/golangci-lint-action@v9
         with:
           version: latest
 
@@ -74,7 +74,7 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - uses: goreleaser/goreleaser-action@v6
+      - uses: goreleaser/goreleaser-action@v7
         with:
           version: latest
           args: release --clean
