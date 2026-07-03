@@ -3,7 +3,7 @@
 // statement, translated into the EU's 24 official languages. CRA Annex V
 // requires the Declaration of Conformity to be available in the
 // language(s) of every member state a product is sold into; this sentence
-// is the one part of the DoC that's fully standardized wording — the same
+// is the one part of the DoC that's fully standardized wording: the same
 // text (only translated) recurs across the EU's other NLF product
 // legislation (RED, Machinery Regulation, EMC Directive, etc.), so it
 // doesn't vary by product and is safe to embed as static assets rather
@@ -14,7 +14,7 @@
 // added incrementally as translations/conformity_statement_<code>.txt
 // files. The included translations follow the standard published NLF
 // wording as closely as possible, but crasec is not a certified legal
-// translation service — verify against your own qualified legal/linguistic
+// translation service. Verify against your own qualified legal/linguistic
 // counsel before relying on them for a regulatory submission.
 package doc
 
@@ -33,13 +33,13 @@ const translationFilePattern = "translations/conformity_statement_%s.txt"
 
 // Language is one of the EU's 24 official languages.
 type Language struct {
-	Code string // ISO 639-1, e.g. "en" — what --languages and Statement expect
+	Code string // ISO 639-1, e.g. "en"; what --languages and Statement expect
 	Name string // English name, e.g. "English"
 }
 
 // EULanguages lists all 24 EU official languages
 // (https://europa.eu/european-union/abouteu/eu-languages_en), regardless
-// of whether a translation has been embedded yet — see AvailableLanguages
+// of whether a translation has been embedded yet; see AvailableLanguages
 // for that.
 var EULanguages = []Language{
 	{"bg", "Bulgarian"},
@@ -120,7 +120,7 @@ func AvailableLanguages() []string {
 }
 
 // MissingLanguages returns the EU official language codes that don't have
-// an embedded translation yet — informational, used to report what a
+// an embedded translation yet, informational, used to report what a
 // "--languages all" request couldn't include.
 func MissingLanguages() []string {
 	have := make(map[string]bool)

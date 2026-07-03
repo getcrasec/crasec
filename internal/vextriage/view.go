@@ -25,6 +25,8 @@ var (
 	doneStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Bold(true)
 )
 
+// View renders the current triage session: the finding under review, or a
+// completion summary once the queue is empty.
 func (m Model) View() string {
 	if len(m.queue) == 0 {
 		return doneStyle.Render(fmt.Sprintf("\nAll findings triaged (%d confirmed). Progress saved to %s.\n", m.confirmed, m.draftPath))

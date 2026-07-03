@@ -14,7 +14,7 @@ const (
 
 // field is one prompt within a section: get/set close over TechnicalFile
 // directly (no reflection), and required is a function of the whole
-// document so a field can be conditionally required — e.g. section 8's
+// document so a field can be conditionally required, e.g. section 8's
 // notified-body fields only matter when the product isn't self-assessed.
 type field struct {
 	key      string // stable identifier, used to resume mid-section
@@ -254,7 +254,7 @@ func SectionComplete(doc *TechnicalFile, sectionIndex int) bool {
 }
 
 // Completion returns how many of the 10 sections are complete, and the
-// total (always 10) — the "X/10 sections complete" figure.
+// total (always 10): the "X/10 sections complete" figure.
 func Completion(doc *TechnicalFile) (done, total int) {
 	total = len(sections)
 	for i := range sections {

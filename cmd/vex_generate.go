@@ -36,7 +36,7 @@ var vexGenerateCmd = &cobra.Command{
 	Long: `Build a VEX (Vulnerability Exploitability eXchange) document: the CRA's
 mechanism for a manufacturer to state, per vulnerability, whether it is
 actually exploitable in their product. Output is CycloneDX VEX JSON (a
-CycloneDX BOM whose vulnerabilities carry an analysis block) — what auditors
+CycloneDX BOM whose vulnerabilities carry an analysis block): what auditors
 and market-surveillance authorities review when assessing a manufacturer's
 vulnerability management process.
 
@@ -52,7 +52,7 @@ Triage decisions can come from three places (pick one):
                                   keyed by CVE. If any finding in --findings
                                   has no matching entry, the command prints
                                   the untriaged findings and exits non-zero
-                                  instead of generating a document — a new
+                                  instead of generating a document; a new
                                   CVE must get a human decision, checked into
                                   the decisions file, before the pipeline can
                                   proceed. Format:
@@ -69,7 +69,7 @@ Triage decisions can come from three places (pick one):
   --statements <file>            non-interactive: a JSON array of pre-made
                                   decisions, keyed by vulnerability ID.
                                   Findings with no matching entry silently
-                                  default to under_investigation — use
+                                  default to under_investigation; use
                                   --from-file instead if you want missing
                                   decisions to block the run.
 
@@ -85,7 +85,7 @@ Triage decisions can come from three places (pick one):
                                   Progress is saved to --draft (default
                                   .crasec-vex-draft.json) after every
                                   confirmed finding, so a long session can be
-                                  resumed by rerunning the same command —
+                                  resumed by rerunning the same command;
                                   already-triaged findings won't be asked
                                   again. Press 'q' at any point to save and
                                   quit; rerun later to pick up where you left
@@ -123,7 +123,7 @@ func init() {
 func runVexGenerate(cmd *cobra.Command, _ []string) error {
 	// Errors past this point are about input data (missing findings,
 	// incomplete triage, invalid decisions), not CLI misuse, so a cobra
-	// flag-usage dump would just be noise — especially in CI logs.
+	// flag-usage dump would just be noise, especially in CI logs.
 	cmd.SilenceUsage = true
 
 	if vexFromFilePath != "" && vexStatementsPath != "" {

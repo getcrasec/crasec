@@ -5,7 +5,7 @@
 // was tampered with after generation, and a README.txt explaining what
 // each file is in plain language.
 //
-// This package only assembles artifacts that already exist on disk — it
+// This package only assembles artifacts that already exist on disk; it
 // doesn't generate them. That's deliberate: each artifact has its own
 // generation command (with its own required inputs, like findings data or
 // a manufacturer's signatory details) that "bundle export" has no business
@@ -23,7 +23,7 @@ import (
 // Artifact is one file the evidence bundle expects to find on disk.
 type Artifact struct {
 	// BundleName is the name this file is given inside the ZIP (and in
-	// manifest.json) — not necessarily the same as SourcePath's basename,
+	// manifest.json), not necessarily the same as SourcePath's basename,
 	// since crasec's own generate commands don't all default to the
 	// bundle's canonical names (e.g. "crasec csaf generate" defaults to
 	// advisory.json, but the bundle calls it csaf-advisory.json).
@@ -147,7 +147,7 @@ func (o Options) Artifacts() []Artifact {
 }
 
 // MissingArtifacts checks every artifact in artifacts for existence on
-// disk, returning the ones that aren't there — "bundle export" refuses to
+// disk, returning the ones that aren't there. "bundle export" refuses to
 // produce a ZIP silently missing evidence, so this is checked up front.
 func MissingArtifacts(artifacts []Artifact) []Artifact {
 	var missing []Artifact
@@ -161,8 +161,8 @@ func MissingArtifacts(artifacts []Artifact) []Artifact {
 
 // hashFile reads path and returns its contents alongside their SHA-256
 // hex digest and last-modified time (used as the manifest's generated_at:
-// simple, robust across every artifact's file format — JSON, PDF, and
-// Sigstore bundle alike — unlike trying to extract a timestamp from each
+// simple, robust across every artifact's file format (JSON, PDF, and
+// Sigstore bundle alike), unlike trying to extract a timestamp from each
 // format's own internal structure).
 func hashFile(path string) (data []byte, sha256Hex string, modTime time.Time, err error) {
 	data, err = os.ReadFile(path)

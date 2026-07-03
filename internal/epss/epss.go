@@ -67,7 +67,7 @@ type record struct {
 // yet scored, or simply nonexistent) is absent from the map rather than
 // treated as an error.
 //
-// Requests are batched — the EPSS API accepts a comma-separated CVE list —
+// Requests are batched (the EPSS API accepts a comma-separated CVE list)
 // to keep this to a handful of round trips even for large SBOMs. A batch
 // request failure aborts the whole call; the caller should treat a non-nil
 // error as "EPSS unavailable this run" and degrade to no EPSS data rather

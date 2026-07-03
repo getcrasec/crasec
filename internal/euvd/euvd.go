@@ -127,7 +127,7 @@ func splitNonEmptyLines(s string) []string {
 // exactly match cveID, or returns (nil, nil) if EUVD has no such record.
 //
 // EUVD's beta /search endpoint has no dedicated CVE-lookup parameter, only
-// a free-text "text" search that matches on description content too — a
+// a free-text "text" search that matches on description content too, so a
 // search for a well-known CVE ID can return unrelated records that merely
 // mention it (e.g. "this is not the Log4Shell vulnerability"). To get an
 // exact match, this fetches candidates via text search and filters

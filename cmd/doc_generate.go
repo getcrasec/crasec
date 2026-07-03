@@ -49,7 +49,7 @@ var docGenerateCmd = &cobra.Command{
 	Short: "Generate the EU Declaration of Conformity (CRA Annex V)",
 	Long: `Build the EU Declaration of Conformity: the legal document in which the
 manufacturer formally declares their product meets the CRA's essential
-requirements. Required for every in-scope product — without it, a product
+requirements. Required for every in-scope product: without it, a product
 cannot legally bear the CE marking or be placed on the EU market.
 
 Fields shared with the Annex VII technical file (product name/version,
@@ -60,7 +60,7 @@ flag explicitly passed overrides the auto-populated value.
 
 This is a legal declaration, not a draft: generation fails, and nothing is
 written, if any Annex V-required field is still missing after
-auto-population and flag overrides — unlike "annex7 scaffold", which is
+auto-population and flag overrides, unlike "annex7 scaffold", which is
 allowed to stay incomplete between wizard sessions.
 
 CRA Annex V requires the declaration to be available in the language(s) of
@@ -69,10 +69,10 @@ takes a comma-separated list of ISO 639-1 codes (e.g. en,it,de,fr) or "all"
 for every EU language crasec currently has an embedded translation for;
 each is rendered as its own line in the PDF's declaration statement. An
 explicitly-named language with no embedded translation yet is a hard
-error — "all" degrades gracefully instead and reports what's missing.
+error; "all" degrades gracefully instead and reports what's missing.
 
 Output is eu-doc.json (machine-readable) and eu-doc.pdf (via headless
-Chrome — see "crasec annex7 export" for the same --chrome-path/$CHROME_PATH
+Chrome; see "crasec annex7 export" for the same --chrome-path/$CHROME_PATH
 detection and error behavior; --no-pdf skips it if no browser is
 available). Pass --sign to also Sigstore-sign both files immediately
 (equivalent to running "crasec doc sign" on each afterward).
@@ -249,7 +249,7 @@ func applyDocOverrides(cmd *cobra.Command, d *eudoc.Declaration) {
 // available is a hard error: silently dropping a language someone asked
 // for by name would be worse than failing loudly on a legal document.
 // "all" degrades gracefully instead, since it inherently means "whatever's
-// currently embedded" — see internal/doc, which is filled in incrementally.
+// currently embedded"; see internal/doc, which is filled in incrementally.
 func applyLanguages(cmd *cobra.Command, d *eudoc.Declaration) error {
 	raw := strings.TrimSpace(docLanguages)
 	if raw == "" {

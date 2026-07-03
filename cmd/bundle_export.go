@@ -29,13 +29,13 @@ var bundleExportCmd = &cobra.Command{
 	Long: `Bundle every CRA compliance artifact crasec can generate for a product
 into a single ZIP an auditor or market-surveillance authority can be handed
 directly: SBOM, VEX, CSAF security advisory, Annex VII technical
-documentation, and EU Declaration of Conformity — each with its Sigstore
-signature where one applies — plus manifest.json (SHA-256 and generation
+documentation, and EU Declaration of Conformity, each with its Sigstore
+signature where one applies, plus manifest.json (SHA-256 and generation
 timestamp for every file, and which CRA requirement it satisfies) and a
 plain-language README.txt.
 
 This command only assembles artifacts that already exist on disk; it
-doesn't generate them. Every artifact is required — if any is missing,
+doesn't generate them. Every artifact is required: if any is missing,
 crasec lists exactly which ones and the command to generate each, and
 exits without writing a partial bundle.
 

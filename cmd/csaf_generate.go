@@ -42,11 +42,11 @@ var csafGenerateCmd = &cobra.Command{
 	Long: `Build a CSAF (Common Security Advisory Framework) 2.0 document: the
 machine-readable advisory format ENISA recommends for CRA vulnerability
 disclosures, and what feeds the EUVD (EU Vulnerability Database). Output is
-plain CSAF 2.0 JSON with three top-level sections — document (title,
+plain CSAF 2.0 JSON with three top-level sections: document (title,
 tracking ID, status, revision history, publisher), product_tree (the
 affected product's full_product_name/CPE and vendor/product/version
-branches), and vulnerabilities (CVE, CVSS v3.x scores, notes, remediations)
-— validated against the official OASIS CSAF 2.0 JSON schema
+branches), and vulnerabilities (CVE, CVSS v3.x scores, notes, remediations).
+It's validated against the official OASIS CSAF 2.0 JSON schema
 (https://docs.oasis-open.org/csaf/csaf/v2.0/csaf_json_schema.json) before
 anything is written.
 
@@ -57,7 +57,7 @@ metadata.component when given; --product-* flags override it, and
 
 Re-running this command against the same --output path and --tracking-id
 appends a new revision to document.tracking.revision_history (and bumps
-current_release_date) rather than resetting it — pass --revision with an
+current_release_date) rather than resetting it. Pass --revision with an
 incremented number and a --revision-summary describing what changed.
 
 Typical pipeline:

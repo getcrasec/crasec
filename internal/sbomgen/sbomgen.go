@@ -1,4 +1,4 @@
-// Package sbomgen builds a CycloneDX (or SPDX) SBOM for a scan target —
+// Package sbomgen builds a CycloneDX (or SPDX) SBOM for a scan target:
 // a filesystem directory, a container image, or a remote git repository.
 //
 // Directory scans run syft unconditionally, then overlay cdxgen when it's
@@ -6,7 +6,7 @@
 // (package-lock.json, pom.xml, Cargo.lock, ...): cdxgen's build-time
 // dependency resolution is richer than syft's filesystem heuristics for
 // those ecosystems, so its components win on PURL collisions and syft
-// fills in whatever cdxgen didn't cover. Container images are syft-only —
+// fills in whatever cdxgen didn't cover. Container images are syft-only:
 // there's no build manifest to hand cdxgen.
 package sbomgen
 
@@ -24,7 +24,7 @@ import (
 
 // Options configures Generate.
 type Options struct {
-	// ProductName, when set, becomes the SBOM's root component name —
+	// ProductName, when set, becomes the SBOM's root component name;
 	// see normalizeMetadataComponent. Typically .crasec.yaml's
 	// product.name.
 	ProductName string
@@ -78,7 +78,7 @@ func directoryScan(ctx context.Context, dir string, opts Options) (*cyclonedx.BO
 }
 
 // normalizeMetadataComponent replaces a scan's root component identity when
-// syft or cdxgen couldn't infer a meaningful one — most commonly a directory
+// syft or cdxgen couldn't infer a meaningful one, most commonly a directory
 // scan target of "." coming back as component name "." (type "file"), which
 // then propagates verbatim into every downstream artifact (VEX/CSAF product
 // metadata, Annex VII's SBOM reference) that reads it from the SBOM. Prefers

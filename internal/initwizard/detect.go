@@ -24,7 +24,7 @@ var manifestChecks = []ecosystemManifest{
 }
 
 // KnownEcosystems is the full pick list offered when detection is
-// ambiguous or empty — manifestChecks' ecosystems plus "other" for
+// ambiguous or empty: manifestChecks' ecosystems plus "other" for
 // anything crasec doesn't specifically recognize yet.
 var KnownEcosystems = []string{"go", "node", "java", "rust", "python", "other"}
 

@@ -14,7 +14,7 @@ const (
 //	CRA Score = CVSS Base Score × KEV Multiplier × EPSS Weight
 //
 // CVSS Base Score is Finding.CVSSScore (0-10, the best available score
-// across Grype/OSV-Scanner sources — see MergeFindings). KEV Multiplier
+// across Grype/OSV-Scanner sources; see MergeFindings). KEV Multiplier
 // rewards confirmed active exploitation; EPSS Weight rewards a high
 // predicted probability of exploitation in the next 30 days. Max possible
 // score is 10 × 2.0 × 1.5 = 30.

@@ -25,23 +25,23 @@ var annex7ExportCmd = &cobra.Command{
 	Short: "Export the Annex VII technical file as a human-readable PDF or HTML report",
 	Long: `Render a technical file produced by "crasec annex7 scaffold" into a
 document an auditor, the board, or a compliance officer can actually read
-and sign — the JSON is for a SaaS vault to store and index, not for a human.
+and sign. The JSON is for a SaaS vault to store and index, not for a human.
 
 --format pdf (the default) converts the report to PDF using headless
 Chrome/Chromium via chromedp; a browser must be installed on the system (in
 Docker/CI, add "chromium" to the base image). If none is found, crasec
-reports that clearly rather than failing deep inside the conversion —
+reports that clearly rather than failing deep inside the conversion.
 --chrome-path (or $CHROME_PATH) points it at a specific install.
 
 --format html skips the Chrome dependency entirely and writes the same
-styled report as standalone HTML — useful for previewing the layout, or
+styled report as standalone HTML, useful for previewing the layout, or
 when no browser is available.
 
 Incomplete sections (missing required fields) are highlighted in amber in
 both formats, so it's obvious at a glance whether the file is audit-ready.
 
 The source JSON is always copied alongside the export (same path as
---output with its extension replaced by .json) — that's the file the SaaS
+--output with its extension replaced by .json). That's the file the SaaS
 vault stores; the PDF/HTML is for people.
 
   crasec annex7 scaffold --product myapp
@@ -109,7 +109,7 @@ func runAnnex7Export(cmd *cobra.Command, _ []string) error {
 	done, total := annex7.Completion(doc)
 	fmt.Fprintf(cmd.ErrOrStderr(), "wrote %s and %s (%d/%d sections complete)\n", annex7ExportOutput, jsonPath, done, total)
 	if done < total {
-		fmt.Fprintf(cmd.ErrOrStderr(), "warning: %d section(s) incomplete — highlighted in amber in the report\n", total-done)
+		fmt.Fprintf(cmd.ErrOrStderr(), "warning: %d section(s) incomplete, highlighted in amber in the report\n", total-done)
 	}
 	return nil
 }

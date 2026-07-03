@@ -10,7 +10,7 @@ import (
 )
 
 // WriteSPDX30 scans target with syft and writes an SPDX 3.0 JSON SBOM to w.
-// cdxgen isn't used here — it produces CycloneDX, not SPDX.
+// cdxgen isn't used here: it produces CycloneDX, not SPDX.
 func WriteSPDX30(ctx context.Context, w io.Writer, target string) error {
 	src, err := syft.GetSource(ctx, target, syft.DefaultGetSourceConfig())
 	if err != nil {

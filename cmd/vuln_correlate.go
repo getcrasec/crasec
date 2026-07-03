@@ -69,7 +69,7 @@ rather than the finding being skipped). The KEV catalog is downloaded from
 CISA and cached locally, refreshed once every 24 hours.
 
 Pass --enable-euvd to also cross-reference findings against ENISA's own EU
-Vulnerability Database (EUVD) — the CRA's authoritative vulnerability
+Vulnerability Database (EUVD), the CRA's authoritative vulnerability
 source and the database behind ENISA's Single Reporting Platform. Matches
 attach EUVD's ID and CVSS assessment (euvdBaseScore etc.) alongside, not in
 place of, the finding's existing CVSS data; when the two disagree on
@@ -176,7 +176,7 @@ func runVulnCorrelate(cmd *cobra.Command, _ []string) error {
 	}
 
 	fmt.Fprintf(cmd.ErrOrStderr(), "found %d vulnerability matches\n", len(findings))
-	fmt.Fprintf(cmd.ErrOrStderr(), "%d CRA-CRITICAL — Article 14 report required within 24h\n", criticalCount)
+	fmt.Fprintf(cmd.ErrOrStderr(), "%d CRA-CRITICAL: Article 14 report required within 24h\n", criticalCount)
 	if correlateUseEUVD && disagreementCount > 0 {
 		fmt.Fprintf(cmd.ErrOrStderr(), "%d finding(s) where EUVD and NVD/OSV disagree on severity by 1.0+ (see severityDisagreement)\n", disagreementCount)
 	}

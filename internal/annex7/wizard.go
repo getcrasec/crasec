@@ -36,7 +36,7 @@ type Model struct {
 	// Elm architecture copies Model by value on every Update call (it's
 	// returned by value and reassigned each time), and strings.Builder's
 	// internal copy-detection panics the moment a builder that's already
-	// been written to gets written again from a new address — which is
+	// been written to gets written again from a new address, which is
 	// exactly what happens here across Update calls.
 	textBuffer string
 
@@ -70,8 +70,11 @@ func Run(doc *TechnicalFile, path string) (*TechnicalFile, error) {
 	return fm.doc, nil
 }
 
+// Init satisfies tea.Model. The wizard needs no startup command.
 func (m Model) Init() tea.Cmd { return nil }
 
+// Update handles one input event, advancing the wizard between fields and
+// sections and saving confirmed answers to disk as it goes.
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	keyMsg, ok := msg.(tea.KeyMsg)
 	if !ok {

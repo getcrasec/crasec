@@ -1,6 +1,6 @@
 // Package initwizard implements "crasec init": the guided first-run setup
 // that detects a project's ecosystem, collects product and manufacturer
-// identity, and writes .crasec.yaml — the config file every other crasec
+// identity, and writes .crasec.yaml: the config file every other crasec
 // command reads afterward, so a project set up once needs far fewer flags
 // on every later run.
 package initwizard
@@ -117,7 +117,7 @@ func newModel(cwd string, existing *config.Config) Model {
 }
 
 // Run launches the interactive init wizard rooted at cwd, pre-filling
-// fields from existing (nil if no .crasec.yaml exists yet — a fresh
+// fields from existing (nil if no .crasec.yaml exists yet, a fresh
 // project), and returns the resulting Config plus whether the user
 // completed the wizard (false if they quit early with Ctrl+C or 'q').
 func Run(cwd string, existing *config.Config) (*config.Config, bool, error) {
@@ -144,8 +144,11 @@ func Run(cwd string, existing *config.Config) (*config.Config, bool, error) {
 	}, true, nil
 }
 
+// Init satisfies tea.Model. The wizard needs no startup command.
 func (m Model) Init() tea.Cmd { return nil }
 
+// Update handles one input event, advancing the init wizard through
+// ecosystem detection and the product/manufacturer identity prompts.
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	keyMsg, ok := msg.(tea.KeyMsg)
 	if !ok {

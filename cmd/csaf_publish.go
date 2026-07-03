@@ -22,7 +22,7 @@ var csafPublishCmd = &cobra.Command{
 	Short: "Publish a CSAF advisory to a .well-known/csaf/ discovery directory",
 	Long: `Publish an advisory into the CSAF "well-known" directory layout so
 downstream tools, aggregators, and market-surveillance authorities can find
-it without knowing a specific URL — the discovery mechanism ENISA expects
+it without knowing a specific URL: the discovery mechanism ENISA expects
 CRA vulnerability disclosures to use
 (https://docs.oasis-open.org/csaf/csaf/v2.0/os/csaf-v2.0-os.html#7-distributing-csaf-documents).
 
@@ -41,7 +41,7 @@ Given --well-known ./public, this:
      (e.g. a manually added public_openpgp_keys entry) is preserved.
 
 --base-url is the origin the directory will actually be served from, e.g.
-https://crasec.io — required, since canonical_url and the distribution's
+https://crasec.io, required, since canonical_url and the distribution's
 directory_url must be absolute.
 
   crasec csaf generate ... -o advisory.json

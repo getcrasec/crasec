@@ -1,6 +1,6 @@
 // Package eudocexport renders an EU Declaration of Conformity
 // (internal/eudoc.Declaration) into a human-facing HTML report, ready for
-// PDF conversion via internal/pdfexport — the same split
+// PDF conversion via internal/pdfexport, the same split
 // internal/annex7/internal/annex7export uses.
 package eudocexport
 

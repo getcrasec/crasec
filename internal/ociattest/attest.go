@@ -3,7 +3,7 @@
 // registry copy) can discover them without a separate delivery channel.
 //
 // This is the shared attestation primitive for every crasec artifact type
-// that is scoped to a container image (SBOM, VEX, CSAF, EU DoC) — per-command
+// that is scoped to a container image (SBOM, VEX, CSAF, EU DoC); per-command
 // code should call AttestAndPush rather than duplicating the OCI plumbing.
 package ociattest
 

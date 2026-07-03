@@ -25,7 +25,7 @@ type Manifest struct {
 }
 
 // Export assembles the evidence bundle at opts.Output. Every artifact in
-// opts.Artifacts() must already exist on disk (see MissingArtifacts) —
+// opts.Artifacts() must already exist on disk (see MissingArtifacts);
 // callers should check that first to produce a clear pre-flight error
 // rather than have Export fail partway through reading files.
 func Export(opts Options) (_ *Manifest, err error) {
@@ -100,7 +100,7 @@ func Export(opts Options) (_ *Manifest, err error) {
 	return manifest, nil
 }
 
-// writeZipEntry writes one file into zw with a fixed modification time —
+// writeZipEntry writes one file into zw with a fixed modification time:
 // zip entries default to the time they're written, which would make two
 // bundles produced seconds apart byte-for-byte different even when their
 // contents are identical; pinning it to the bundle's own creation instant

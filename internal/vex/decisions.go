@@ -12,7 +12,7 @@ import (
 )
 
 // Decision is one entry in a version-controlled bulk triage decisions file
-// (YAML) — the CI-pipeline alternative to interactive triage: teams encode
+// (YAML), the CI-pipeline alternative to interactive triage: teams encode
 // their VEX decisions once, check the file into source control alongside
 // the code, and replay it on every release without human intervention.
 type Decision struct {
@@ -82,7 +82,7 @@ func (d Decision) deadline() (*time.Time, error) {
 // both the raw entries (for cross-checking against current findings, e.g.
 // StaleDecisions) and the derived Statement map GenerateDocument expects,
 // keyed by vulnerability ID. Every decision is validated with the same
-// per-status rules interactive triage enforces (Statement.Validate) —
+// per-status rules interactive triage enforces (Statement.Validate):
 // a decisions file with an "affected" entry missing action_statement, for
 // example, fails to load rather than silently producing an invalid VEX
 // document.
@@ -115,7 +115,7 @@ func LoadDecisionsFile(path string) ([]Decision, map[string]Statement, error) {
 }
 
 // StaleDecisions returns decisions whose Component field doesn't match any
-// current finding for that CVE — a sign the decision was made against an
+// current finding for that CVE, a sign the decision was made against an
 // older version of the component and may need a fresh look, even though it
 // still technically covers the CVE. Decisions for CVEs no longer present in
 // findings at all are not flagged: an outdated decision for a vulnerability

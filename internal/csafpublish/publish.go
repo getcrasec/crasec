@@ -4,7 +4,7 @@
 // https://docs.oasis-open.org/csaf/csaf/v2.0/os/csaf-v2.0-os.html#7-distributing-csaf-documents.
 // This is how downstream tools, aggregators, and market-surveillance
 // authorities find a manufacturer's advisories without knowing a specific
-// URL in advance — ENISA expects CRA vulnerability disclosures to be
+// URL in advance. ENISA expects CRA vulnerability disclosures to be
 // reachable this way.
 package csafpublish
 

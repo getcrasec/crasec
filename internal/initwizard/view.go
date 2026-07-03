@@ -18,6 +18,7 @@ var (
 	helpStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("245")).Italic(true)
 )
 
+// View renders the current step of the init wizard.
 func (m Model) View() string {
 	var b strings.Builder
 	b.WriteString(titleStyle.Render(fmt.Sprintf("crasec init — %s", filepath.Base(m.cwd))))

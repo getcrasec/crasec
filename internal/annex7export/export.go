@@ -1,5 +1,5 @@
 // Package annex7export renders a CRA Annex VII technical file
-// (internal/annex7.TechnicalFile) into a human-facing HTML report — as
+// (internal/annex7.TechnicalFile) into a human-facing HTML report, as
 // opposed to the JSON the wizard writes, which is meant for a SaaS vault to
 // store and index, not for a person to open. PDF conversion of that HTML is
 // handled by internal/pdfexport, shared with internal/eudocexport.

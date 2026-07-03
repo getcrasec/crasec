@@ -4,7 +4,7 @@
 // requirements. Without it a product cannot legally bear the CE marking or
 // be placed on the EU market. Unlike internal/annex7 (a long-lived record
 // edited over time through a wizard), the DoC is generated in one shot from
-// inputs the manufacturer already has on hand — most of them, in fact,
+// inputs the manufacturer already has on hand, most of them, in fact,
 // already recorded in the Annex VII technical file.
 package eudoc
 
@@ -17,7 +17,7 @@ import (
 	"github.com/getcrasec/crasec/internal/annex7"
 )
 
-// Statement is the fixed NLF declaration statement in one language — see
+// Statement is the fixed NLF declaration statement in one language; see
 // internal/doc, which embeds it in all languages crasec currently has a
 // translation for. CRA Annex V requires the DoC to be available in the
 // language(s) of every member state a product is sold into, so a
@@ -38,7 +38,7 @@ type Declaration struct {
 	// At least one is required.
 	Statements []Statement `json:"statements"`
 
-	// ObjectOfDeclaration describes the product and its intended use —
+	// ObjectOfDeclaration describes the product and its intended use:
 	// what, precisely, this declaration is about.
 	ObjectOfDeclaration string `json:"object_of_declaration"`
 
@@ -49,7 +49,7 @@ type Declaration struct {
 
 // Manufacturer identifies who is declaring conformity. Address must be an
 // EU-registered address (the manufacturer's own, or an EU-based authorized
-// representative's) per Annex V — crasec doesn't validate that a given
+// representative's) per Annex V; crasec doesn't validate that a given
 // address is actually within the EU, since that's a legal determination,
 // not a syntactic one.
 type Manufacturer struct {
@@ -68,8 +68,8 @@ type Product struct {
 }
 
 // Conformity is how conformity was demonstrated: applied standards (or a
-// direct Annex I assessment), and — only for Important/Critical class
-// products — the notified body that was involved.
+// direct Annex I assessment), and, only for Important/Critical class
+// products, the notified body that was involved.
 type Conformity struct {
 	AssessedToAnnexIDirectly bool     `json:"assessed_to_annex_i_directly"`
 	Standards                []string `json:"standards,omitempty"`
@@ -80,7 +80,7 @@ type Conformity struct {
 // Signatory is who is signing this declaration on the manufacturer's
 // behalf, and when/where. Signature itself is a physical/wet or
 // electronic-signature field left blank in the rendered PDF for the named
-// signatory to actually sign — crasec's own Sigstore signing (see "crasec
+// signatory to actually sign. crasec's own Sigstore signing (see "crasec
 // doc sign") attests to the eu-doc.json/eu-doc.pdf files as artifacts, and
 // is a separate thing from this signatory field.
 type Signatory struct {
@@ -115,7 +115,7 @@ func FromAnnex7(doc *annex7.TechnicalFile) Declaration {
 
 // composeObject builds a default "object of declaration" description from
 // Annex VII's general-description section (product/version/purpose/
-// intended use environment) — the same information Annex V asks for, just
+// intended use environment), the same information Annex V asks for, just
 // under different field names.
 func composeObject(doc *annex7.TechnicalFile) string {
 	var b strings.Builder
@@ -136,7 +136,7 @@ func composeObject(doc *annex7.TechnicalFile) string {
 // between risk class and conformity assessment module: internal
 // production control (Module A) for self-assessed Default-class products,
 // third-party involvement (Module B+C or H) once a notified body is
-// required. This is a starting point, not a legal determination — exactly
+// required. This is a starting point, not a legal determination: exactly
 // which module applies for a given Important/Critical product depends on
 // facts crasec doesn't have, so callers should confirm/override it via
 // --assessment-procedure rather than treat this as authoritative.

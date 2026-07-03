@@ -20,7 +20,7 @@ type Config struct {
 	Product      Product      `yaml:"product"`
 	Manufacturer Manufacturer `yaml:"manufacturer"`
 	// Ecosystem is the detected/confirmed primary language ecosystem
-	// (go, node, python, java, rust, other) — informational today, but
+	// (go, node, python, java, rust, other); informational today, but
 	// gives downstream commands a hook to specialize behavior later
 	// without re-running detection.
 	Ecosystem string `yaml:"ecosystem,omitempty"`
@@ -46,7 +46,7 @@ type Scan struct {
 }
 
 // Load reads .crasec.yaml from the current directory, falling back to
-// ~/.crasec/config.yaml — the same two locations root.go's own viper setup
+// ~/.crasec/config.yaml: the same two locations root.go's own viper setup
 // searches, and the "project first, personal default second" order every
 // other crasec command that reads project state already uses. A missing
 // file is not an error: (nil, nil) means "no config yet", distinct from a
@@ -100,8 +100,8 @@ func (c *Config) Save(path string) error {
 
 // ApplyDefault sets cmd's flagName to val when the flag wasn't explicitly
 // passed on the command line and val is non-empty. This has to happen via
-// Flags().Set — a flag's variable holding a non-empty default isn't enough
-// to satisfy cobra's MarkFlagRequired, which checks Flags().Changed —
+// Flags().Set: a flag's variable holding a non-empty default isn't enough
+// to satisfy cobra's MarkFlagRequired, which checks Flags().Changed,
 // which is also what Set() marks true. Called from a command's PreRunE
 // (which runs before cobra validates required flags), this lets a flag
 // stay declared required for anyone who hasn't run "crasec init" yet,

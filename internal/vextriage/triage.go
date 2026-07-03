@@ -1,6 +1,6 @@
 // Package vextriage is an interactive terminal UI (bubbletea/lipgloss) for
 // walking through vulnscan findings one vulnerability at a time and
-// recording a manufacturer's VEX triage decision for each — the human step
+// recording a manufacturer's VEX triage decision for each: the human step
 // that "crasec vex generate" needs before it can emit a CycloneDX VEX
 // document, since only a person can say whether a given CVE is actually
 // exploitable in the product.
@@ -43,7 +43,7 @@ var statusDescriptions = map[openvex.Status]string{
 }
 
 // justificationOptions is deliberately the 4 codes called out for this
-// triage flow, not go-vex's full set of 5 — vulnerable_code_not_in_execute_path
+// triage flow, not go-vex's full set of 5: vulnerable_code_not_in_execute_path
 // is a valid OpenVEX justification but isn't offered here to keep the
 // picker to the CRA-relevant shortlist.
 var justificationOptions = []openvex.Justification{
@@ -179,8 +179,11 @@ func Run(findings []vulnscan.Finding, draftPath string) (map[string]vex.Statemen
 	return fm.statements, len(fm.queue) == 0, nil
 }
 
+// Init satisfies tea.Model. The triage session needs no startup command.
 func (m Model) Init() tea.Cmd { return nil }
 
+// Update handles one input event, advancing the triage queue and persisting
+// the draft as findings are confirmed.
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	keyMsg, ok := msg.(tea.KeyMsg)
 	if !ok {
@@ -330,7 +333,7 @@ func (m Model) advanceFromTextStep() (tea.Model, tea.Cmd) {
 }
 
 // confirmCurrent builds the Statement for the finding at the front of the
-// queue, validates it, and — if valid — commits it, persists the draft, and
+// queue, validates it, and, if valid, commits it, persists the draft, and
 // advances the queue. This is the "[Enter] to confirm" + "save progress
 // after each confirmed finding" behavior.
 func (m Model) confirmCurrent(notes string) (tea.Model, tea.Cmd) {
@@ -372,7 +375,7 @@ func (m Model) confirmCurrent(notes string) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// loadDraft reads a previously saved draft (or --statements file — they
+// loadDraft reads a previously saved draft (or --statements file; they
 // share the same JSON shape), indexed by vulnerability ID. A missing file
 // is not an error: it means this is the first session.
 func loadDraft(path string) (map[string]vex.Statement, error) {

@@ -18,6 +18,8 @@ var (
 	helpStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("245")).Italic(true)
 )
 
+// View renders the current wizard step: the section overview, or the field
+// currently being prompted for.
 func (m Model) View() string {
 	if m.step == stepOverview {
 		return m.viewOverview()

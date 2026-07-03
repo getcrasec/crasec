@@ -6,7 +6,7 @@
 // ENISA recommends for CRA vulnerability disclosures, and it's what the
 // EUVD (EU Vulnerability Database) ingests. Rather than hand-rolling the
 // document structure and its own JSON-schema validator, this package builds
-// on github.com/gocsaf/csaf/v3/csaf — a BSI-maintained library whose
+// on github.com/gocsaf/csaf/v3/csaf, a BSI-maintained library whose
 // generated Go types mirror the OASIS spec field-for-field and whose
 // ValidateCSAF embeds the exact schema published at
 // https://docs.oasis-open.org/csaf/csaf/v2.0/csaf_json_schema.json.
@@ -114,7 +114,7 @@ func MarshalAndValidate(adv *csaf.Advisory) ([]byte, error) {
 
 // LoadPrevious reads a previously generated advisory at path, so
 // GenerateAdvisory can carry forward its revision history. Returns (nil,
-// nil) when path doesn't exist — a fresh advisory, not an error.
+// nil) when path doesn't exist: a fresh advisory, not an error.
 func LoadPrevious(path string) (*csaf.Advisory, error) {
 	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
 		return nil, nil
@@ -268,7 +268,7 @@ func productRef(meta Metadata) string {
 // buildVulnerabilities converts findings into CSAF vulnerability entries,
 // one per unique vulnerability ID (a finding's package/version informs the
 // entry's notes and remediation, but every entry references the single
-// product declared in the product tree — crasec advisories are scoped to
+// product declared in the product tree (crasec advisories are scoped to
 // one product per document, matching internal/vex's GenerateDocument).
 func buildVulnerabilities(findings []vulnscan.Finding, productID csaf.ProductID) (csaf.Vulnerabilities, error) {
 	seen := map[string]bool{}

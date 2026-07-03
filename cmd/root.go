@@ -17,7 +17,7 @@ var rootCmd = &cobra.Command{
 	Long: `crasec turns a repository into the signed evidence package the EU Cyber
 Resilience Act requires: an SBOM, a vulnerability correlation report scored
 for CRA relevance, a VEX exploitability statement, a CSAF security advisory,
-Annex VII technical documentation, and an EU Declaration of Conformity —
+Annex VII technical documentation, and an EU Declaration of Conformity,
 bundled into a single ZIP an auditor or market-surveillance authority can be
 handed directly.
 

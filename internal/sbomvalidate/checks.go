@@ -5,7 +5,7 @@ import (
 )
 
 // orgPopulated returns true when the entity exists and carries at least a name,
-// a URL, or a contact entry — enough to identify who made/supplied the component.
+// a URL, or a contact entry: enough to identify who made/supplied the component.
 func orgPopulated(org *cyclonedx.OrganizationalEntity) bool {
 	if org == nil {
 		return false

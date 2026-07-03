@@ -20,7 +20,7 @@ var annex7ScaffoldCmd = &cobra.Command{
 	Use:   "scaffold",
 	Short: "Interactively build the CRA Annex VII technical documentation file",
 	Long: `Walk through all 10 sections CRA Annex VII requires in a manufacturer's
-technical documentation — the file a market-surveillance authority (Italy's
+technical documentation: the file a market-surveillance authority (Italy's
 AGCM, Germany's BNetzA, etc.) requests first to check CRA conformity, and
 which must be kept for 10 years:
 
@@ -31,7 +31,7 @@ which must be kept for 10 years:
   5. Applicable standards          10. Copy of EU DoC
 
 Every confirmed field is saved to --output immediately, so the file itself
-is the draft — quitting at any point ('q' from the section overview, or
+is the draft: quitting at any point ('q' from the section overview, or
 Ctrl+C) leaves exactly as much on disk as was confirmed, and rerunning with
 --edit resumes from there, showing each already-answered field pre-filled.
 

@@ -1,6 +1,6 @@
 // Package sbomvalidate scores a CycloneDX SBOM against the 10 mandatory
 // per-component fields BSI TR-03183-2 v2.1.0 requires (§3.2.9, §5.2.2,
-// §5.2.4, §6.1) — the authoritative technical guideline EU regulators point
+// §5.2.4, §6.1), the authoritative technical guideline EU regulators point
 // to for what a CRA-compliant SBOM actually contains. Each field also maps
 // to CRA Annex I, Part II, §1(a).
 package sbomvalidate

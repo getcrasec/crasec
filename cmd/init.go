@@ -158,5 +158,5 @@ func printNextSteps(w io.Writer, cfg *config.Config) {
 	fmt.Fprintln(w, "  → Then: crasec vex generate --sbom sbom.cdx.json --findings findings.json")
 	fmt.Fprintln(w, "  → Then: crasec bundle export")
 	fmt.Fprintln(w)
-	fmt.Fprintf(w, "Each of those now reads its defaults from %s — no flags needed to get started.\n", config.FileName)
+	fmt.Fprintf(w, "Each of those now reads its defaults from %s, no flags needed to get started.\n", config.FileName)
 }

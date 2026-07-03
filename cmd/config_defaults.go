@@ -7,7 +7,7 @@ import (
 )
 
 // applyConfigDefaults returns a PreRunE that fills in any of the given
-// flags left unset from .crasec.yaml (written by "crasec init") — set as
+// flags left unset from .crasec.yaml (written by "crasec init"). Set as
 // a command's PreRunE, this runs before cobra validates required flags, so
 // a flag can stay declared required for anyone who hasn't run
 // "crasec init" yet while being silently satisfied by the project config

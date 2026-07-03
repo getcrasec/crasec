@@ -4,7 +4,7 @@
 // AGCM, Germany's BNetzA, etc.) will request first to check CRA conformity.
 // It's edited through an interactive bubbletea wizard (see Wizard) rather
 // than handed to callers as a one-shot generator, since most of its content
-// — design rationale, SDLC description, conformity assessment — is
+// (design rationale, SDLC description, conformity assessment) is
 // judgment a human has to supply, not something derivable from scanning
 // the product.
 package annex7
@@ -91,6 +91,7 @@ type VulnerabilityHandling struct {
 // required.
 type ProductClass string
 
+// The three CRA Annex III risk classes, in ascending order of scrutiny.
 const (
 	ClassDefault   ProductClass = "default"
 	ClassImportant ProductClass = "important"
@@ -113,7 +114,7 @@ type EUDoCReference struct {
 	Reference string `json:"reference"`
 }
 
-// EUDoCCopy is section 10: the DoC itself, embedded inline or linked —
+// EUDoCCopy is section 10: the DoC itself, embedded inline or linked;
 // at least one of the two must be set.
 type EUDoCCopy struct {
 	EmbeddedText string `json:"embedded_text,omitempty"`
@@ -147,8 +148,8 @@ func Exists(path string) bool {
 	return err == nil
 }
 
-// Save writes doc to path as indented JSON, regardless of completion state
-// — an in-progress technical file is still saved, so a wizard session can
+// Save writes doc to path as indented JSON, regardless of completion state:
+// an in-progress technical file is still saved, so a wizard session can
 // always be resumed with --edit.
 func Save(doc *TechnicalFile, path string) error {
 	data, err := json.MarshalIndent(doc, "", "  ")

@@ -1,7 +1,7 @@
 // Package pdfexport converts a standalone HTML report (inline CSS, no
 // external resource references) into a PDF via headless Chrome/Chromium
 // (chromedp), and locates a Chrome/Chromium executable to drive. It's
-// artifact-agnostic — internal/annex7export and internal/eudocexport both
+// artifact-agnostic: internal/annex7export and internal/eudocexport both
 // build their own HTML and hand it here rather than each reimplementing
 // the chromedp/Chrome-detection plumbing.
 package pdfexport
@@ -42,7 +42,7 @@ func RenderPDF(ctx context.Context, html []byte, chromePath, label string) ([]by
 	)
 	if isRoot() {
 		// Chrome refuses to run sandboxed as root, which is the normal
-		// state of affairs in an unprivileged CI/Docker container — add
+		// state of affairs in an unprivileged CI/Docker container. Add
 		// --no-sandbox only in that case rather than unconditionally
 		// weakening the sandbox on a developer's own machine.
 		opts = append(opts, chromedp.Flag("no-sandbox", true))
@@ -130,7 +130,7 @@ func chromeAbsolutePaths() []string {
 }
 
 // chromePathNames are the binary names checked via $PATH, in priority
-// order — Docker/CI images conventionally install one of these.
+// order: Docker/CI images conventionally install one of these.
 var chromePathNames = []string{
 	"google-chrome",
 	"google-chrome-stable",
@@ -143,7 +143,7 @@ var chromePathNames = []string{
 // override (--chrome-path, or the CHROME_PATH environment variable) always
 // wins when set. Detection failure returns an actionable error explaining
 // how to install a browser or point crasec at one, rather than letting
-// chromedp fail deep inside PDF conversion with an opaque exec error — its
+// chromedp fail deep inside PDF conversion with an opaque exec error; its
 // own fallback is to blindly attempt to exec "google-chrome".
 func DetectChrome(override string) (string, error) {
 	if override != "" {
@@ -177,7 +177,7 @@ conversion entirely and just get the styled HTML report`)
 }
 
 // ChromePathEnvOverride resolves the --chrome-path flag value, falling back
-// to $CHROME_PATH — the same override precedence every crasec PDF-exporting
+// to $CHROME_PATH: the same override precedence every crasec PDF-exporting
 // command uses.
 func ChromePathEnvOverride(flagValue string) string {
 	if flagValue != "" {

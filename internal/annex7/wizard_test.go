@@ -123,7 +123,7 @@ func TestWizard_FillSection1_PersistsAfterEveryField(t *testing.T) {
 	tm, _ = m.Update(enter())
 	m = tm.(Model)
 
-	// intended_use_environment — last field of section 1; confirming should
+	// intended_use_environment: last field of section 1; confirming should
 	// drop back to the overview.
 	tm, _ = m.Update(runes("cloud"))
 	m = tm.(Model)
