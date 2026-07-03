@@ -25,8 +25,16 @@ import (
 // rather than anything from the caller's own HTML template. label
 // identifies which artifact this PDF is (e.g. "CRA Annex VII Technical
 // Documentation", "EU Declaration of Conformity").
+//
+// Colors here match --text-muted from the page templates' own design
+// system (internal/annex7export/templates/annex7.html,
+// internal/eudocexport/templates/eudoc.html), but the typeface doesn't:
+// Chrome renders header/footer templates in an isolated context with no
+// access to the page's own @font-face rules, and embedding Inter just for
+// an 8px footer strip isn't worth the size, so this falls back to the
+// system sans-serif stack instead.
 func footerTemplate(label string) string {
-	return fmt.Sprintf(`<div style="font-size:8px; width:100%%; text-align:center; color:#8a94a3; -webkit-print-color-adjust:exact;">crasec &middot; %s &middot; Page <span class="pageNumber"></span> of <span class="totalPages"></span></div>`, label)
+	return fmt.Sprintf(`<div style="font-family:system-ui,sans-serif; font-size:8px; width:100%%; text-align:center; color:#8A8A84; -webkit-print-color-adjust:exact;"><span style="text-transform:uppercase; letter-spacing:0.06em;">Crasec</span> &middot; %s &middot; Page <span class="pageNumber"></span> of <span class="totalPages"></span></div>`, label)
 }
 
 // RenderPDF converts html into a PDF using headless Chrome/Chromium at
