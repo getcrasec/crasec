@@ -99,7 +99,7 @@ func runAnnex7Scaffold(cmd *cobra.Command, _ []string) error {
 	}
 
 	done, total := annex7.Completion(final)
-	fmt.Fprintf(cmd.ErrOrStderr(), "saved %s (%d/%d sections complete)\n", output, done, total)
+	fmt.Fprintf(cmd.ErrOrStderr(), "saved %s (%d/%d sections complete)\n", output, done, total) //nolint:errcheck // best-effort status output
 	return nil
 }
 

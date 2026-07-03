@@ -44,7 +44,7 @@ type Identity struct {
 // SignFile signs the file at path and writes the resulting Sigstore bundle
 // to path+".sig", returning the bundle's path.
 func SignFile(ctx context.Context, path string) (string, error) {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) // #nosec G304 -- path is caller-supplied (ultimately a CLI flag), not attacker-controlled remote input
 	if err != nil {
 		return "", fmt.Errorf("reading %s: %w", path, err)
 	}
@@ -60,7 +60,7 @@ func SignFile(ctx context.Context, path string) (string, error) {
 	}
 
 	sigPath := path + ".sig"
-	if err := os.WriteFile(sigPath, sigBytes, 0o644); err != nil {
+	if err := os.WriteFile(sigPath, sigBytes, 0o644); err != nil { // #nosec G306 G703 -- signature is meant to be publicly verifiable, not secret; sigPath is derived from a caller-supplied CLI path, not attacker-controlled remote input
 		return "", fmt.Errorf("writing %s: %w", sigPath, err)
 	}
 	return sigPath, nil
@@ -192,17 +192,17 @@ func VerifyFile(ctx context.Context, artifactPath, sigPath string, identity *Ide
 		return nil, fmt.Errorf("building verifier: %w", err)
 	}
 
-	artifact, err := os.Open(artifactPath)
+	artifact, err := os.Open(artifactPath) // #nosec G304 -- artifactPath is a user-supplied CLI argument, not attacker-controlled remote input
 	if err != nil {
 		return nil, fmt.Errorf("opening %s: %w", artifactPath, err)
 	}
-	defer artifact.Close()
+	defer artifact.Close() //nolint:errcheck // read-only handle; nothing to flush on close
 
 	var identityPolicy verify.PolicyOption
 	if identity != nil {
-		certID, err := verify.NewShortCertificateIdentity(identity.Issuer, identity.IssuerRegex, identity.SAN, identity.SANRegex)
-		if err != nil {
-			return nil, fmt.Errorf("building certificate identity policy: %w", err)
+		certID, certErr := verify.NewShortCertificateIdentity(identity.Issuer, identity.IssuerRegex, identity.SAN, identity.SANRegex)
+		if certErr != nil {
+			return nil, fmt.Errorf("building certificate identity policy: %w", certErr)
 		}
 		identityPolicy = verify.WithCertificateIdentity(certID)
 	} else {
@@ -249,17 +249,17 @@ func githubActionsIdentityToken(ctx context.Context) (string, error) {
 	q.Set("audience", "sigstore")
 	u.RawQuery = q.Encode()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil) // #nosec G704 -- URL is built from the GitHub Actions-provided ACTIONS_ID_TOKEN_REQUEST_URL env var, not external input
 	if err != nil {
 		return "", err
 	}
 	req.Header.Set("Authorization", "bearer "+reqToken)
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := http.DefaultClient.Do(req) // #nosec G704 -- URL is built from the GitHub Actions-provided ACTIONS_ID_TOKEN_REQUEST_URL env var, not external input
 	if err != nil {
 		return "", fmt.Errorf("requesting GitHub Actions OIDC token: %w", err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck // read-only handle; nothing to flush on close
 
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("GitHub Actions OIDC token request failed: %s", resp.Status)

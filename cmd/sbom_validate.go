@@ -48,11 +48,11 @@ func runValidate(cmd *cobra.Command, args []string) error {
 	path := args[0]
 	out := cmd.OutOrStdout()
 
-	f, err := os.Open(path)
+	f, err := os.Open(path) // #nosec G304 -- path is a user-supplied CLI argument, not attacker-controlled remote input
 	if err != nil {
 		return fmt.Errorf("opening %s: %w", path, err)
 	}
-	defer f.Close()
+	defer f.Close() //nolint:errcheck // read-only handle; nothing to flush on close
 
 	var bom cyclonedx.BOM
 	if err := cyclonedx.NewBOMDecoder(f, cyclonedx.BOMFileFormatJSON).Decode(&bom); err != nil {
@@ -61,11 +61,11 @@ func runValidate(cmd *cobra.Command, args []string) error {
 
 	result := sbomvalidate.Validate(&bom)
 	if result.TotalComponents == 0 {
-		fmt.Fprintln(out, "No components found in SBOM.")
+		fmt.Fprintln(out, "No components found in SBOM.") //nolint:errcheck // best-effort status output
 		return nil
 	}
 
-	fmt.Fprintf(out, "Validating %s  ·  BSI TR-03183-2 v2.1.0  ·  %d components\n\n",
+	fmt.Fprintf(out, "Validating %s  ·  BSI TR-03183-2 v2.1.0  ·  %d components\n\n", //nolint:errcheck // best-effort status output
 		path, result.TotalComponents)
 
 	// Print per-component warnings, capped at 20 to keep output readable.
@@ -79,44 +79,44 @@ func runValidate(cmd *cobra.Command, args []string) error {
 		if shown >= maxWarnComponents {
 			continue
 		}
-		fmt.Fprintf(out, "WARN  [%s]\n", r.Label)
+		fmt.Fprintf(out, "WARN  [%s]\n", r.Label) //nolint:errcheck // best-effort status output
 		for _, field := range r.Missing {
-			fmt.Fprintf(out, "        missing %-14s  %s / %s\n", field.ID, field.BSIRef, field.CRARef)
+			fmt.Fprintf(out, "        missing %-14s  %s / %s\n", field.ID, field.BSIRef, field.CRARef) //nolint:errcheck // best-effort status output
 		}
 		shown++
 	}
 	if totalAffected > shown {
-		fmt.Fprintf(out, "      ... %d more components with warnings omitted\n", totalAffected-shown)
+		fmt.Fprintf(out, "      ... %d more components with warnings omitted\n", totalAffected-shown) //nolint:errcheck // best-effort status output
 	}
 	if totalAffected > 0 {
-		fmt.Fprintln(out)
+		fmt.Fprintln(out) //nolint:errcheck // best-effort status output
 	}
 
 	// Per-field coverage table, already sorted highest → lowest.
-	fmt.Fprintln(out, "Per-field population:")
+	fmt.Fprintln(out, "Per-field population:") //nolint:errcheck // best-effort status output
 	for _, s := range result.FieldStats {
 		bar := coverageBar(s.Pct, 20)
-		fmt.Fprintf(out, "  %-14s  %s  %d/%d  (%.1f%%)\n", s.ID, bar, s.Passed, result.TotalComponents, s.Pct)
+		fmt.Fprintf(out, "  %-14s  %s  %d/%d  (%.1f%%)\n", s.ID, bar, s.Passed, result.TotalComponents, s.Pct) //nolint:errcheck // best-effort status output
 	}
 
-	fmt.Fprintf(out, "\nBSI TR-03183-2 compliance score: %.1f%%\n", result.Score)
-	fmt.Fprintf(out, "(%d/%d fields populated, %d components × %d fields)\n\n",
+	fmt.Fprintf(out, "\nBSI TR-03183-2 compliance score: %.1f%%\n", result.Score) //nolint:errcheck // best-effort status output
+	fmt.Fprintf(out, "(%d/%d fields populated, %d components × %d fields)\n\n",   //nolint:errcheck // best-effort status output
 		totalActual(result), result.TotalComponents*len(result.FieldStats), result.TotalComponents, len(result.FieldStats))
 
 	// Result + CI exit codes
 	if validateStrict && totalAffected > 0 {
-		fmt.Fprintln(out, "Result: FAIL  (--strict: all fields must be present in all components)")
+		fmt.Fprintln(out, "Result: FAIL  (--strict: all fields must be present in all components)") //nolint:errcheck // best-effort status output
 		os.Exit(1)
 	}
 	if validateMinScore > 0 && result.Score < validateMinScore {
-		fmt.Fprintf(out, "Result: FAIL  (score %.1f%% < --min-score %.0f%%)\n", result.Score, validateMinScore)
+		fmt.Fprintf(out, "Result: FAIL  (score %.1f%% < --min-score %.0f%%)\n", result.Score, validateMinScore) //nolint:errcheck // best-effort status output
 		os.Exit(1)
 	}
 
 	if totalAffected == 0 {
-		fmt.Fprintln(out, "Result: PASS  (all 10 BSI fields present in all components)")
+		fmt.Fprintln(out, "Result: PASS  (all 10 BSI fields present in all components)") //nolint:errcheck // best-effort status output
 	} else {
-		fmt.Fprintf(out, "Result: %.1f%%  (add --strict or --min-score N for CI gating)\n", result.Score)
+		fmt.Fprintf(out, "Result: %.1f%%  (add --strict or --min-score N for CI gating)\n", result.Score) //nolint:errcheck // best-effort status output
 	}
 
 	return nil

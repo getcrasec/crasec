@@ -205,8 +205,8 @@ func TestResumeFromDraft_SkipsAlreadyTriaged(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(draft, data, 0o644); err != nil {
-		t.Fatal(err)
+	if writeErr := os.WriteFile(draft, data, 0o644); writeErr != nil { // #nosec G306 -- test fixture, not sensitive
+		t.Fatal(writeErr)
 	}
 
 	resumed, err := loadDraft(draft)
@@ -230,7 +230,7 @@ func TestResumeFromDraft_SkipsAlreadyTriaged(t *testing.T) {
 
 func assertDraftContains(t *testing.T, path, vulnID string) {
 	t.Helper()
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) // #nosec G304 -- path is caller-supplied (ultimately a CLI flag), not attacker-controlled remote input
 	if err != nil {
 		t.Fatalf("reading draft: %v", err)
 	}

@@ -61,14 +61,16 @@ func Load(ctx context.Context, cachePath string) (*Catalog, error) {
 
 	c, raw, err := download(ctx)
 	if err != nil {
-		if c, ferr := loadFromFile(cachePath); ferr == nil {
-			return c, nil
+		if cached, ferr := loadFromFile(cachePath); ferr == nil {
+			return cached, nil
 		}
 		return nil, err
 	}
 
-	if mkErr := os.MkdirAll(filepath.Dir(cachePath), 0o755); mkErr == nil {
-		_ = os.WriteFile(cachePath, raw, 0o644)
+	// Best-effort: caching the catalog is an optimization, not a
+	// requirement, so a write failure here doesn't affect the result.
+	if mkErr := os.MkdirAll(filepath.Dir(cachePath), 0o755); mkErr == nil { // #nosec G301 -- cache dir is user-configurable but not secret; 0755 lets other processes read it
+		_ = os.WriteFile(cachePath, raw, 0o644) //nolint:errcheck,gosec // cached catalog is public CISA data, not secret; write failure is non-fatal
 	}
 
 	return c, nil
@@ -84,7 +86,7 @@ func download(ctx context.Context) (*Catalog, []byte, error) {
 	if err != nil {
 		return nil, nil, fmt.Errorf("downloading KEV catalog: %w", err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck // read-only handle; nothing to flush on close
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, nil, fmt.Errorf("downloading KEV catalog: unexpected status %s", resp.Status)
@@ -103,7 +105,7 @@ func download(ctx context.Context) (*Catalog, []byte, error) {
 }
 
 func loadFromFile(path string) (*Catalog, error) {
-	raw, err := os.ReadFile(path)
+	raw, err := os.ReadFile(path) // #nosec G304 -- path is caller-supplied (ultimately a CLI flag), not attacker-controlled remote input
 	if err != nil {
 		return nil, err
 	}

@@ -113,17 +113,17 @@ func runVulnCorrelate(cmd *cobra.Command, _ []string) error {
 
 	findings := grypeFindings
 	if correlateUseOSV {
-		osvFindings, err := vulnscan.RunOSVScanner(cmd.Context(), correlateSBOMPath)
-		if err != nil {
-			return fmt.Errorf("running osv-scanner (pass --osv-scanner=false to skip it): %w", err)
+		osvFindings, osvErr := vulnscan.RunOSVScanner(cmd.Context(), correlateSBOMPath)
+		if osvErr != nil {
+			return fmt.Errorf("running osv-scanner (pass --osv-scanner=false to skip it): %w", osvErr)
 		}
 		findings = vulnscan.MergeFindings(grypeFindings, osvFindings)
 	}
 
 	if correlateUseKEV {
-		catalog, err := loadKEVCatalog(cmd)
-		if err != nil {
-			fmt.Fprintf(cmd.ErrOrStderr(), "warning: could not load CISA KEV catalog (%v); findings will not be checked for active exploitation\n", err)
+		catalog, kevErr := loadKEVCatalog(cmd)
+		if kevErr != nil {
+			fmt.Fprintf(cmd.ErrOrStderr(), "warning: could not load CISA KEV catalog (%v); findings will not be checked for active exploitation\n", kevErr) //nolint:errcheck // best-effort status output
 		} else {
 			vulnscan.ApplyKEV(findings, catalog)
 		}
@@ -131,9 +131,9 @@ func runVulnCorrelate(cmd *cobra.Command, _ []string) error {
 
 	epssScores := map[string]float64{}
 	if correlateUseEPSS {
-		scores, err := epss.NewClient().FetchScores(cmd.Context(), collectVulnerabilityIDs(findings))
-		if err != nil {
-			fmt.Fprintf(cmd.ErrOrStderr(), "warning: EPSS unavailable (%v); CRA scoring will use the default EPSS weight\n", err)
+		scores, epssErr := epss.NewClient().FetchScores(cmd.Context(), collectVulnerabilityIDs(findings))
+		if epssErr != nil {
+			fmt.Fprintf(cmd.ErrOrStderr(), "warning: EPSS unavailable (%v); CRA scoring will use the default EPSS weight\n", epssErr) //nolint:errcheck // best-effort status output
 		} else {
 			epssScores = scores
 		}
@@ -142,8 +142,8 @@ func runVulnCorrelate(cmd *cobra.Command, _ []string) error {
 
 	disagreementCount := 0
 	if correlateUseEUVD {
-		if err := vulnscan.ApplyEUVD(cmd.Context(), findings, euvd.NewClient()); err != nil {
-			fmt.Fprintf(cmd.ErrOrStderr(), "warning: EUVD cross-reference unavailable (%v); continuing without it\n", err)
+		if euvdErr := vulnscan.ApplyEUVD(cmd.Context(), findings, euvd.NewClient()); euvdErr != nil {
+			fmt.Fprintf(cmd.ErrOrStderr(), "warning: EUVD cross-reference unavailable (%v); continuing without it\n", euvdErr) //nolint:errcheck // best-effort status output
 		}
 		for _, f := range findings {
 			if f.SeverityDisagreement {
@@ -175,10 +175,10 @@ func runVulnCorrelate(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
-	fmt.Fprintf(cmd.ErrOrStderr(), "found %d vulnerability matches\n", len(findings))
-	fmt.Fprintf(cmd.ErrOrStderr(), "%d CRA-CRITICAL: Article 14 report required within 24h\n", criticalCount)
+	fmt.Fprintf(cmd.ErrOrStderr(), "found %d vulnerability matches\n", len(findings))                         //nolint:errcheck // best-effort status output
+	fmt.Fprintf(cmd.ErrOrStderr(), "%d CRA-CRITICAL: Article 14 report required within 24h\n", criticalCount) //nolint:errcheck // best-effort status output
 	if correlateUseEUVD && disagreementCount > 0 {
-		fmt.Fprintf(cmd.ErrOrStderr(), "%d finding(s) where EUVD and NVD/OSV disagree on severity by 1.0+ (see severityDisagreement)\n", disagreementCount)
+		fmt.Fprintf(cmd.ErrOrStderr(), "%d finding(s) where EUVD and NVD/OSV disagree on severity by 1.0+ (see severityDisagreement)\n", disagreementCount) //nolint:errcheck // best-effort status output
 	}
 	if len(findings) > 0 {
 		printFindingsTable(cmd.ErrOrStderr(), findings)
@@ -211,7 +211,7 @@ func printFindingsTable(w io.Writer, findings []vulnscan.Finding) {
 	colorize := isTerminal(w)
 
 	tw := tabwriter.NewWriter(w, 0, 4, 2, ' ', 0)
-	fmt.Fprintln(tw, "VULNERABILITY\tPACKAGE\tCVSS\tKEV\tEPSS\tCRA SCORE\tCATEGORY")
+	fmt.Fprintln(tw, "VULNERABILITY\tPACKAGE\tCVSS\tKEV\tEPSS\tCRA SCORE\tCATEGORY") //nolint:errcheck // best-effort status output
 	for _, f := range findings {
 		kevMark := "-"
 		if f.ActivelyExploited {
@@ -226,11 +226,11 @@ func printFindingsTable(w io.Writer, findings []vulnscan.Finding) {
 			}
 		}
 
-		fmt.Fprintf(tw, "%s\t%s@%s\t%.1f\t%s\t%.2f\t%.2f\t%s\n",
+		fmt.Fprintf(tw, "%s\t%s@%s\t%.1f\t%s\t%.2f\t%.2f\t%s\n", //nolint:errcheck // best-effort status output
 			f.VulnerabilityID, f.PackageName, f.PackageVersion,
 			f.CVSSScore, kevMark, f.EPSSScore, f.CRARelevanceScore, category)
 	}
-	tw.Flush()
+	tw.Flush() //nolint:errcheck // best-effort; table has already been written to tw above
 }
 
 // isTerminal reports whether w is a character device (a terminal), so
@@ -270,7 +270,7 @@ func resolveCorrelateWriter(cmd *cobra.Command) (io.Writer, func(), error) {
 	if correlateOutput == "" {
 		return cmd.OutOrStdout(), func() {}, nil
 	}
-	f, err := os.Create(correlateOutput)
+	f, err := os.Create(correlateOutput) // #nosec G304 -- correlateOutput is a user-supplied CLI argument, not attacker-controlled remote input
 	if err != nil {
 		return nil, nil, fmt.Errorf("opening output file %s: %w", correlateOutput, err)
 	}

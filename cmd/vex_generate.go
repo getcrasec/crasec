@@ -163,7 +163,7 @@ func runVexGenerate(cmd *cobra.Command, _ []string) error {
 			if draftPath == "" {
 				draftPath = vextriage.DefaultDraftPath
 			}
-			fmt.Fprintf(cmd.ErrOrStderr(), "triage session ended early; progress saved to %s\nrerun this command to resume, or pass --statements %s to generate now with the remaining findings defaulted to under_investigation\n", draftPath, draftPath)
+			fmt.Fprintf(cmd.ErrOrStderr(), "triage session ended early; progress saved to %s\nrerun this command to resume, or pass --statements %s to generate now with the remaining findings defaulted to under_investigation\n", draftPath, draftPath) //nolint:errcheck // best-effort status output
 			return nil
 		}
 	}
@@ -183,7 +183,7 @@ func runVexGenerate(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	fmt.Fprintf(cmd.ErrOrStderr(), "wrote VEX document with %d vulnerabilities\n", len(*bom.Vulnerabilities))
+	fmt.Fprintf(cmd.ErrOrStderr(), "wrote VEX document with %d vulnerabilities\n", len(*bom.Vulnerabilities)) //nolint:errcheck // best-effort status output
 	return nil
 }
 
@@ -226,11 +226,11 @@ func resolveVexMetadata(cmd *cobra.Command) (vex.Metadata, error) {
 // loadSBOMComponent reads a CycloneDX SBOM and returns its
 // metadata.component, or nil if the SBOM has none.
 func loadSBOMComponent(path string) (*cyclonedx.Component, error) {
-	f, err := os.Open(path)
+	f, err := os.Open(path) // #nosec G304 -- path is a user-supplied CLI argument, not attacker-controlled remote input
 	if err != nil {
 		return nil, fmt.Errorf("opening SBOM %s: %w", path, err)
 	}
-	defer f.Close()
+	defer f.Close() //nolint:errcheck // read-only handle; nothing to flush on close
 
 	var bom cyclonedx.BOM
 	if err := cyclonedx.NewBOMDecoder(f, cyclonedx.BOMFileFormatJSON).Decode(&bom); err != nil {
@@ -245,7 +245,7 @@ func loadSBOMComponent(path string) (*cyclonedx.Component, error) {
 // loadFindings reads and decodes the findings JSON produced by
 // "crasec vuln correlate".
 func loadFindings(path string) ([]vulnscan.Finding, error) {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) // #nosec G304 -- path is a user-supplied CLI argument, not attacker-controlled remote input
 	if err != nil {
 		return nil, fmt.Errorf("reading findings %s: %w", path, err)
 	}
@@ -270,15 +270,15 @@ func loadBulkDecisions(cmd *cobra.Command, path string, findings []vulnscan.Find
 	}
 
 	if stale := vex.StaleDecisions(decisions, findings); len(stale) > 0 {
-		fmt.Fprintf(cmd.ErrOrStderr(), "warning: %d decision(s) in %s reference a component that no longer matches current findings (may be stale):\n", len(stale), path)
+		fmt.Fprintf(cmd.ErrOrStderr(), "warning: %d decision(s) in %s reference a component that no longer matches current findings (may be stale):\n", len(stale), path) //nolint:errcheck // best-effort status output
 		for _, d := range stale {
-			fmt.Fprintf(cmd.ErrOrStderr(), "  %s (recorded against %s)\n", d.CVE, d.Component)
+			fmt.Fprintf(cmd.ErrOrStderr(), "  %s (recorded against %s)\n", d.CVE, d.Component) //nolint:errcheck // best-effort status output
 		}
 	}
 
 	missing := untriagedFindings(findings, statements)
 	if len(missing) > 0 {
-		fmt.Fprintf(cmd.ErrOrStderr(), "%d finding(s) not covered by %s:\n", len(missing), path)
+		fmt.Fprintf(cmd.ErrOrStderr(), "%d finding(s) not covered by %s:\n", len(missing), path) //nolint:errcheck // best-effort status output
 		printUntriagedTable(cmd.ErrOrStderr(), missing)
 		return nil, fmt.Errorf("add a decision for each finding above to %s and rerun", path)
 	}
@@ -310,19 +310,19 @@ func untriagedFindings(findings []vulnscan.Finding, statements map[string]vex.St
 
 func printUntriagedTable(w io.Writer, findings []vulnscan.Finding) {
 	tw := tabwriter.NewWriter(w, 0, 4, 2, ' ', 0)
-	fmt.Fprintln(tw, "VULNERABILITY\tCOMPONENT\tCVSS\tCRA SCORE\tCATEGORY")
+	fmt.Fprintln(tw, "VULNERABILITY\tCOMPONENT\tCVSS\tCRA SCORE\tCATEGORY") //nolint:errcheck // best-effort status output
 	for _, f := range findings {
-		fmt.Fprintf(tw, "%s\t%s@%s\t%.1f\t%.2f\t%s\n",
+		fmt.Fprintf(tw, "%s\t%s@%s\t%.1f\t%.2f\t%s\n", //nolint:errcheck // best-effort status output
 			f.VulnerabilityID, f.PackageName, f.PackageVersion, f.CVSSScore, f.CRARelevanceScore, f.CRACategory)
 	}
-	tw.Flush()
+	tw.Flush() //nolint:errcheck // best-effort; table has already been written to tw above
 }
 
 // loadVEXStatements reads a JSON array of triage decisions and indexes them
 // by vulnerability ID.
 func loadVEXStatements(path string) (map[string]vex.Statement, error) {
 	statements := map[string]vex.Statement{}
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) // #nosec G304 -- path is a user-supplied CLI argument, not attacker-controlled remote input
 	if err != nil {
 		return nil, fmt.Errorf("reading VEX statements %s: %w", path, err)
 	}
@@ -346,7 +346,7 @@ func resolveVexWriter(cmd *cobra.Command) (io.Writer, func(), error) {
 	if vexOutput == "" {
 		return cmd.OutOrStdout(), func() {}, nil
 	}
-	f, err := os.Create(vexOutput)
+	f, err := os.Create(vexOutput) // #nosec G304 -- vexOutput is a user-supplied CLI argument, not attacker-controlled remote input
 	if err != nil {
 		return nil, nil, fmt.Errorf("opening output file %s: %w", vexOutput, err)
 	}

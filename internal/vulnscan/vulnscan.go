@@ -101,7 +101,7 @@ func Correlate(ctx context.Context, sbomPath string) ([]Finding, error) {
 	if err != nil {
 		return nil, fmt.Errorf("loading vulnerability database: %w", err)
 	}
-	defer store.Close()
+	defer store.Close() //nolint:errcheck // read-only handle; nothing to flush on close
 
 	vm := grype.VulnerabilityMatcher{
 		VulnerabilityProvider: store,
@@ -130,7 +130,7 @@ func Correlate(ctx context.Context, sbomPath string) ([]Finding, error) {
 
 // toFinding flattens a Grype match (plus its vulnerability metadata, which
 // carries CVSS/severity/data source) into a Finding.
-func toFinding(m match.Match, metadataProvider vulnerability.MetadataProvider) (Finding, error) {
+func toFinding(m match.Match, metadataProvider vulnerability.MetadataProvider) (Finding, error) { //nolint:staticcheck // deprecated API still used internally by grype itself
 	f := Finding{
 		VulnerabilityID: m.Vulnerability.ID,
 		PackageName:     m.Package.Name,

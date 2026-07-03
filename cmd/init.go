@@ -84,7 +84,7 @@ func runInit(cmd *cobra.Command, _ []string) error {
 			return err
 		}
 		if !completed {
-			fmt.Fprintln(cmd.ErrOrStderr(), "init cancelled; .crasec.yaml was not written")
+			fmt.Fprintln(cmd.ErrOrStderr(), "init cancelled; .crasec.yaml was not written") //nolint:errcheck // best-effort status output
 			return nil
 		}
 	}
@@ -151,12 +151,12 @@ func nonInteractiveConfig(cwd string, existing *config.Config) (*config.Config, 
 }
 
 func printNextSteps(w io.Writer, cfg *config.Config) {
-	fmt.Fprintf(w, "\nWrote %s for %q\n\n", config.FileName, cfg.Product.Name)
-	fmt.Fprintln(w, "What's next:")
-	fmt.Fprintln(w, "  → Run:  crasec sbom generate")
-	fmt.Fprintln(w, "  → Then: crasec vuln correlate --sbom sbom.cdx.json")
-	fmt.Fprintln(w, "  → Then: crasec vex generate --sbom sbom.cdx.json --findings findings.json")
-	fmt.Fprintln(w, "  → Then: crasec bundle export")
-	fmt.Fprintln(w)
-	fmt.Fprintf(w, "Each of those now reads its defaults from %s, no flags needed to get started.\n", config.FileName)
+	fmt.Fprintf(w, "\nWrote %s for %q\n\n", config.FileName, cfg.Product.Name)                                         //nolint:errcheck // best-effort status output
+	fmt.Fprintln(w, "What's next:")                                                                                    //nolint:errcheck // best-effort status output
+	fmt.Fprintln(w, "  → Run:  crasec sbom generate")                                                                  //nolint:errcheck // best-effort status output
+	fmt.Fprintln(w, "  → Then: crasec vuln correlate --sbom sbom.cdx.json")                                            //nolint:errcheck // best-effort status output
+	fmt.Fprintln(w, "  → Then: crasec vex generate --sbom sbom.cdx.json --findings findings.json")                     //nolint:errcheck // best-effort status output
+	fmt.Fprintln(w, "  → Then: crasec bundle export")                                                                  //nolint:errcheck // best-effort status output
+	fmt.Fprintln(w)                                                                                                    //nolint:errcheck // best-effort status output
+	fmt.Fprintf(w, "Each of those now reads its defaults from %s, no flags needed to get started.\n", config.FileName) //nolint:errcheck // best-effort status output
 }

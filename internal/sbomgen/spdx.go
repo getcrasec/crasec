@@ -16,7 +16,7 @@ func WriteSPDX30(ctx context.Context, w io.Writer, target string) error {
 	if err != nil {
 		return fmt.Errorf("resolving source %q: %w", target, err)
 	}
-	defer src.Close()
+	defer src.Close() //nolint:errcheck // read-only handle; nothing to flush on close
 
 	s, err := syft.CreateSBOM(ctx, src, syft.DefaultCreateSBOMConfig())
 	if err != nil {

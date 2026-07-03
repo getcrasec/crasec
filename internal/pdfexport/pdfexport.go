@@ -62,20 +62,20 @@ func RenderPDF(ctx context.Context, html []byte, chromePath, label string) ([]by
 	if err != nil {
 		return nil, fmt.Errorf("creating temporary HTML file: %w", err)
 	}
-	defer os.Remove(tmp.Name())
-	if _, err := tmp.Write(html); err != nil {
-		tmp.Close()
-		return nil, fmt.Errorf("writing temporary HTML file: %w", err)
+	defer os.Remove(tmp.Name()) //nolint:errcheck // best-effort temp file cleanup
+	if _, writeErr := tmp.Write(html); writeErr != nil {
+		tmp.Close() //nolint:errcheck // already returning writeErr; a close failure here isn't the actionable one
+		return nil, fmt.Errorf("writing temporary HTML file: %w", writeErr)
 	}
-	if err := tmp.Close(); err != nil {
-		return nil, fmt.Errorf("closing temporary HTML file: %w", err)
+	if closeErr := tmp.Close(); closeErr != nil {
+		return nil, fmt.Errorf("closing temporary HTML file: %w", closeErr)
 	}
 
 	var pdfData []byte
 	err = chromedp.Run(taskCtx,
 		chromedp.Navigate("file://"+tmp.Name()),
 		chromedp.ActionFunc(func(ctx context.Context) error {
-			data, _, err := page.PrintToPDF().
+			data, _, pdfErr := page.PrintToPDF().
 				WithPrintBackground(true).
 				WithDisplayHeaderFooter(true).
 				WithHeaderTemplate("<span></span>").
@@ -85,8 +85,8 @@ func RenderPDF(ctx context.Context, html []byte, chromePath, label string) ([]by
 				WithMarginLeft(0.4).
 				WithMarginRight(0.4).
 				Do(ctx)
-			if err != nil {
-				return err
+			if pdfErr != nil {
+				return pdfErr
 			}
 			pdfData = data
 			return nil

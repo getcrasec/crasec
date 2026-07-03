@@ -66,14 +66,14 @@ func directoryScan(ctx context.Context, dir string, opts Options) (*cyclonedx.BO
 	cdxBOM, err := cdxgenScan(ctx, dir, opts.statusWriter())
 	if err != nil {
 		// cdxgen failure is non-fatal; degrade gracefully.
-		fmt.Fprintf(opts.statusWriter(), "warning: cdxgen failed (%v), using syft results only\n", err)
+		fmt.Fprintf(opts.statusWriter(), "warning: cdxgen failed (%v), using syft results only\n", err) //nolint:errcheck // best-effort status output
 		normalizeMetadataComponent(syftBOM, dir, opts.ProductName)
 		return syftBOM, nil
 	}
 
 	merged := mergeBOMs(cdxBOM, syftBOM)
 	normalizeMetadataComponent(merged, dir, opts.ProductName)
-	fmt.Fprintf(opts.statusWriter(), "merged cdxgen + syft: %d components\n", componentCount(merged))
+	fmt.Fprintf(opts.statusWriter(), "merged cdxgen + syft: %d components\n", componentCount(merged)) //nolint:errcheck // best-effort status output
 	return merged, nil
 }
 
@@ -110,7 +110,7 @@ func syftScan(ctx context.Context, target string) (*cyclonedx.BOM, error) {
 	if err != nil {
 		return nil, fmt.Errorf("resolving source %q: %w", target, err)
 	}
-	defer src.Close()
+	defer src.Close() //nolint:errcheck // read-only handle; nothing to flush on close
 
 	s, err := syft.CreateSBOM(ctx, src, syft.DefaultCreateSBOMConfig())
 	if err != nil {

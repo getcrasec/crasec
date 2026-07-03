@@ -30,21 +30,21 @@ func cdxgenScan(ctx context.Context, dir string, statusWriter io.Writer) (*cyclo
 	if err != nil {
 		return nil, fmt.Errorf("creating temp file: %w", err)
 	}
-	defer os.Remove(tmp.Name())
-	tmp.Close()
+	defer os.Remove(tmp.Name()) //nolint:errcheck // best-effort temp file cleanup
+	tmp.Close()                 //nolint:errcheck // no writes since CreateTemp; nothing to flush
 
-	fmt.Fprintf(statusWriter, "running cdxgen on %s...\n", dir)
-	c := exec.CommandContext(ctx, "cdxgen", "--output", tmp.Name(), dir)
+	fmt.Fprintf(statusWriter, "running cdxgen on %s...\n", dir)          //nolint:errcheck // best-effort status output
+	c := exec.CommandContext(ctx, "cdxgen", "--output", tmp.Name(), dir) // #nosec G204 -- dir is a user-supplied CLI argument, not attacker-controlled remote input
 	c.Stderr = statusWriter
-	if err := c.Run(); err != nil {
-		return nil, fmt.Errorf("cdxgen exited: %w", err)
+	if runErr := c.Run(); runErr != nil {
+		return nil, fmt.Errorf("cdxgen exited: %w", runErr)
 	}
 
 	f, err := os.Open(tmp.Name())
 	if err != nil {
 		return nil, fmt.Errorf("reading cdxgen output: %w", err)
 	}
-	defer f.Close()
+	defer f.Close() //nolint:errcheck // read-only handle; nothing to flush on close
 
 	var bom cyclonedx.BOM
 	if err := cyclonedx.NewBOMDecoder(f, cyclonedx.BOMFileFormatJSON).Decode(&bom); err != nil {

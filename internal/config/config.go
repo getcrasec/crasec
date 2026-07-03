@@ -60,7 +60,7 @@ func Load() (*Config, error) {
 		return nil, nil
 	}
 
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) // #nosec G304 -- path is caller-supplied (ultimately a CLI flag), not attacker-controlled remote input
 	if err != nil {
 		return nil, fmt.Errorf("reading %s: %w", path, err)
 	}
@@ -92,7 +92,7 @@ func (c *Config) Save(path string) error {
 	if err != nil {
 		return fmt.Errorf("encoding config: %w", err)
 	}
-	if err := os.WriteFile(path, data, 0o644); err != nil {
+	if err := os.WriteFile(path, data, 0o644); err != nil { // #nosec G306 -- project config isn't secret; other tooling/processes may need to read it
 		return fmt.Errorf("writing %s: %w", path, err)
 	}
 	return nil

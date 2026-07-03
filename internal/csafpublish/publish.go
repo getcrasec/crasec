@@ -66,7 +66,7 @@ type Result struct {
 //
 // Nothing is written until the source advisory passes schema validation.
 func Publish(advisoryPath string, opts Options) (*Result, error) {
-	data, err := os.ReadFile(advisoryPath)
+	data, err := os.ReadFile(advisoryPath) // #nosec G304 -- path is caller-supplied (ultimately a CLI flag), not attacker-controlled remote input
 	if err != nil {
 		return nil, fmt.Errorf("reading %s: %w", advisoryPath, err)
 	}
@@ -89,14 +89,14 @@ func Publish(advisoryPath string, opts Options) (*Result, error) {
 
 	csafDir := filepath.Join(opts.WellKnownRoot, ".well-known", "csaf")
 	advisoriesDir := filepath.Join(csafDir, "advisories")
-	if err := os.MkdirAll(advisoriesDir, 0o755); err != nil {
-		return nil, fmt.Errorf("creating %s: %w", advisoriesDir, err)
+	if mkErr := os.MkdirAll(advisoriesDir, 0o755); mkErr != nil { // #nosec G301 -- .well-known directory is served publicly by design
+		return nil, fmt.Errorf("creating %s: %w", advisoriesDir, mkErr)
 	}
 
 	filename := util.CleanFileName(trackingID)
 	destPath := filepath.Join(advisoriesDir, filename)
-	if err := publishAdvisoryFiles(advisoryPath, destPath, filename, data); err != nil {
-		return nil, err
+	if publishErr := publishAdvisoryFiles(advisoryPath, destPath, filename, data); publishErr != nil {
+		return nil, publishErr
 	}
 
 	indexPath, count, err := regenerateIndex(csafDir, advisoriesDir)
@@ -147,22 +147,22 @@ func parseAndValidateAdvisory(data []byte, sourcePath string) (*csaf.Advisory, s
 // and (if present next to the source) its Sigstore .sig bundle into the
 // advisories directory.
 func publishAdvisoryFiles(srcPath, destPath, filename string, data []byte) error {
-	if err := os.WriteFile(destPath, data, 0o644); err != nil {
+	if err := os.WriteFile(destPath, data, 0o644); err != nil { // #nosec G306 G703 -- published CSAF advisory is meant to be publicly served; destPath is built from util.CleanFileName(trackingID), not attacker-controlled remote input
 		return fmt.Errorf("writing %s: %w", destPath, err)
 	}
 
 	sum256 := sha256.Sum256(data)
-	if err := os.WriteFile(destPath+".sha256", []byte(fmt.Sprintf("%s  %s\n", hex.EncodeToString(sum256[:]), filename)), 0o644); err != nil {
+	if err := os.WriteFile(destPath+".sha256", []byte(fmt.Sprintf("%s  %s\n", hex.EncodeToString(sum256[:]), filename)), 0o644); err != nil { // #nosec G306 G703 -- published checksum is meant to be publicly served; destPath is built from util.CleanFileName(trackingID), not attacker-controlled remote input
 		return fmt.Errorf("writing %s.sha256: %w", destPath, err)
 	}
 	sum512 := sha512.Sum512(data)
-	if err := os.WriteFile(destPath+".sha512", []byte(fmt.Sprintf("%s  %s\n", hex.EncodeToString(sum512[:]), filename)), 0o644); err != nil {
+	if err := os.WriteFile(destPath+".sha512", []byte(fmt.Sprintf("%s  %s\n", hex.EncodeToString(sum512[:]), filename)), 0o644); err != nil { // #nosec G306 G703 -- published checksum is meant to be publicly served; destPath is built from util.CleanFileName(trackingID), not attacker-controlled remote input
 		return fmt.Errorf("writing %s.sha512: %w", destPath, err)
 	}
 
-	if sig, err := os.ReadFile(srcPath + ".sig"); err == nil {
-		if err := os.WriteFile(destPath+".sig", sig, 0o644); err != nil {
-			return fmt.Errorf("writing %s.sig: %w", destPath, err)
+	if sig, err := os.ReadFile(srcPath + ".sig"); err == nil { // #nosec G304 -- srcPath is caller-supplied (ultimately a CLI flag), not attacker-controlled remote input
+		if sigErr := os.WriteFile(destPath+".sig", sig, 0o644); sigErr != nil { // #nosec G306 G703 -- published signature is meant to be publicly served; destPath is built from util.CleanFileName(trackingID), not attacker-controlled remote input
+			return fmt.Errorf("writing %s.sig: %w", destPath, sigErr)
 		}
 	} else if !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("reading %s.sig: %w", srcPath, err)
@@ -191,7 +191,7 @@ func regenerateIndex(csafDir, advisoriesDir string) (string, int, error) {
 	}
 
 	indexPath := filepath.Join(csafDir, "index.txt")
-	if err := os.WriteFile(indexPath, buf.Bytes(), 0o644); err != nil {
+	if err := os.WriteFile(indexPath, buf.Bytes(), 0o644); err != nil { // #nosec G306 -- published index is meant to be publicly served
 		return "", 0, fmt.Errorf("writing %s: %w", indexPath, err)
 	}
 	return indexPath, len(names), nil
@@ -244,14 +244,14 @@ func writeProviderMetadata(csafDir, baseURL string, role csaf.MetadataRole, adv 
 		return "", fmt.Errorf("generated provider-metadata.json failed CSAF 2.0 schema validation:\n  %s", strings.Join(violations, "\n  "))
 	}
 
-	if err := os.WriteFile(pmdPath, data, 0o644); err != nil {
+	if err := os.WriteFile(pmdPath, data, 0o644); err != nil { // #nosec G306 -- published provider-metadata.json is meant to be publicly served
 		return "", fmt.Errorf("writing %s: %w", pmdPath, err)
 	}
 	return pmdPath, nil
 }
 
 func loadExistingProviderMetadata(path string) (*csaf.ProviderMetadata, error) {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) // #nosec G304 -- path is caller-supplied (ultimately a CLI flag), not attacker-controlled remote input
 	if errors.Is(err, os.ErrNotExist) {
 		return nil, nil
 	}

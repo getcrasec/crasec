@@ -23,7 +23,7 @@ func TestSaveLoad_RoundTrips(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) // #nosec G304 -- test-controlled path
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,7 +78,7 @@ func TestLoad_CorruptFileReturnsError(t *testing.T) {
 	restore := chdir(t, dir)
 	defer restore()
 
-	if err := os.WriteFile(FileName, []byte("not: valid: yaml: at: all: ["), 0o644); err != nil {
+	if err := os.WriteFile(FileName, []byte("not: valid: yaml: at: all: ["), 0o644); err != nil { // #nosec G306 -- test fixture, not sensitive
 		t.Fatal(err)
 	}
 
@@ -144,5 +144,5 @@ func chdir(t *testing.T, dir string) func() {
 	if err := os.Chdir(dir); err != nil {
 		t.Fatal(err)
 	}
-	return func() { _ = os.Chdir(orig) }
+	return func() { _ = os.Chdir(orig) } //nolint:errcheck // best-effort restore of test working directory
 }

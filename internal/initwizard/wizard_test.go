@@ -16,7 +16,7 @@ func runes(s string) tea.KeyMsg {
 
 func TestDetectEcosystems_FindsGoMod(t *testing.T) {
 	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module x\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module x\n"), 0o644); err != nil { // #nosec G306 -- test fixture, not sensitive
 		t.Fatal(err)
 	}
 	found := DetectEcosystems(dir)
@@ -27,8 +27,12 @@ func TestDetectEcosystems_FindsGoMod(t *testing.T) {
 
 func TestDetectEcosystems_MonorepoFindsBoth(t *testing.T) {
 	dir := t.TempDir()
-	os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module x\n"), 0o644)
-	os.WriteFile(filepath.Join(dir, "package.json"), []byte("{}"), 0o644)
+	if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module x\n"), 0o644); err != nil { // #nosec G306 -- test fixture, not sensitive
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "package.json"), []byte("{}"), 0o644); err != nil { // #nosec G306 -- test fixture, not sensitive
+		t.Fatal(err)
+	}
 
 	found := DetectEcosystems(dir)
 	if len(found) != 2 {
@@ -38,7 +42,9 @@ func TestDetectEcosystems_MonorepoFindsBoth(t *testing.T) {
 
 func TestNewModel_SkipsEcosystemStepOnSingleDetection(t *testing.T) {
 	dir := t.TempDir()
-	os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module x\n"), 0o644)
+	if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module x\n"), 0o644); err != nil { // #nosec G306 -- test fixture, not sensitive
+		t.Fatal(err)
+	}
 
 	m := newModel(dir, nil)
 	if !m.skipEcosystemStep || m.ecosystem != "go" {
@@ -130,7 +136,9 @@ func TestFullFlow_CollectsAllFieldsAndReturnsConfig(t *testing.T) {
 
 func TestRequiredFieldValidation_BlocksEmptyProductName(t *testing.T) {
 	dir := t.TempDir()
-	os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module x\n"), 0o644)
+	if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module x\n"), 0o644); err != nil { // #nosec G306 -- test fixture, not sensitive
+		t.Fatal(err)
+	}
 	m := newModel(dir, nil) // lands on stepProductName with a pre-filled default
 
 	for range m.textBuffer {
@@ -150,7 +158,9 @@ func TestRequiredFieldValidation_BlocksEmptyProductName(t *testing.T) {
 
 func TestReviewStep_BackReturnsToStartWithValuesPreserved(t *testing.T) {
 	dir := t.TempDir()
-	os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module x\n"), 0o644)
+	if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module x\n"), 0o644); err != nil { // #nosec G306 -- test fixture, not sensitive
+		t.Fatal(err)
+	}
 	m := newModel(dir, nil)
 	m.step = stepReview
 	m.productName = "myapp"
@@ -168,7 +178,9 @@ func TestReviewStep_BackReturnsToStartWithValuesPreserved(t *testing.T) {
 
 func TestQuit_ReportsIncomplete(t *testing.T) {
 	dir := t.TempDir()
-	os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module x\n"), 0o644)
+	if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module x\n"), 0o644); err != nil { // #nosec G306 -- test fixture, not sensitive
+		t.Fatal(err)
+	}
 	m := newModel(dir, nil)
 
 	tm, cmd := m.Update(tea.KeyMsg{Type: tea.KeyCtrlC})

@@ -380,7 +380,7 @@ func (m Model) confirmCurrent(notes string) (tea.Model, tea.Cmd) {
 // is not an error: it means this is the first session.
 func loadDraft(path string) (map[string]vex.Statement, error) {
 	statements := map[string]vex.Statement{}
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) // #nosec G304 -- path is caller-supplied (ultimately a CLI flag), not attacker-controlled remote input
 	if errors.Is(err, os.ErrNotExist) {
 		return statements, nil
 	}
@@ -408,7 +408,7 @@ func saveDraft(path string, statements map[string]vex.Statement) error {
 	if err != nil {
 		return fmt.Errorf("encoding draft: %w", err)
 	}
-	if err := os.WriteFile(path, data, 0o644); err != nil {
+	if err := os.WriteFile(path, data, 0o644); err != nil { // #nosec G306 -- triage draft is local working state, not secret
 		return fmt.Errorf("writing draft %s: %w", path, err)
 	}
 	return nil

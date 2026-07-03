@@ -186,7 +186,7 @@ func (d Declaration) Validate() []string {
 
 // Load reads a previously saved Declaration from path.
 func Load(path string) (*Declaration, error) {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) // #nosec G304 -- path is caller-supplied (ultimately a CLI flag), not attacker-controlled remote input
 	if err != nil {
 		return nil, fmt.Errorf("reading %s: %w", path, err)
 	}
@@ -203,7 +203,7 @@ func Save(d Declaration, path string) error {
 	if err != nil {
 		return fmt.Errorf("encoding EU Declaration of Conformity: %w", err)
 	}
-	if err := os.WriteFile(path, data, 0o644); err != nil {
+	if err := os.WriteFile(path, data, 0o644); err != nil { // #nosec G306 -- declaration is a shareable compliance document, not secret
 		return fmt.Errorf("writing %s: %w", path, err)
 	}
 	return nil

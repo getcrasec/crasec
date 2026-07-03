@@ -63,7 +63,7 @@ func TestHasCdxgenManifest(t *testing.T) {
 	if hasCdxgenManifest(dir) {
 		t.Fatal("empty directory should not report a cdxgen manifest")
 	}
-	if err := os.WriteFile(filepath.Join(dir, "package-lock.json"), []byte("{}"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "package-lock.json"), []byte("{}"), 0o644); err != nil { // #nosec G306 -- test fixture, not sensitive
 		t.Fatal(err)
 	}
 	if !hasCdxgenManifest(dir) {

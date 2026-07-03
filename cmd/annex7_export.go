@@ -95,7 +95,7 @@ func runAnnex7Export(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
-	if err := os.WriteFile(annex7ExportOutput, reportBytes, 0o644); err != nil {
+	if err := os.WriteFile(annex7ExportOutput, reportBytes, 0o644); err != nil { // #nosec G306 -- report is a shareable compliance document, not secret
 		return fmt.Errorf("writing %s: %w", annex7ExportOutput, err)
 	}
 
@@ -106,10 +106,12 @@ func runAnnex7Export(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	// Best-effort status output to stderr; a write failure here doesn't
+	// affect the command's actual result.
 	done, total := annex7.Completion(doc)
-	fmt.Fprintf(cmd.ErrOrStderr(), "wrote %s and %s (%d/%d sections complete)\n", annex7ExportOutput, jsonPath, done, total)
+	fmt.Fprintf(cmd.ErrOrStderr(), "wrote %s and %s (%d/%d sections complete)\n", annex7ExportOutput, jsonPath, done, total) //nolint:errcheck
 	if done < total {
-		fmt.Fprintf(cmd.ErrOrStderr(), "warning: %d section(s) incomplete, highlighted in amber in the report\n", total-done)
+		fmt.Fprintf(cmd.ErrOrStderr(), "warning: %d section(s) incomplete, highlighted in amber in the report\n", total-done) //nolint:errcheck
 	}
 	return nil
 }

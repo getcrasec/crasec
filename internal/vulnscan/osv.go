@@ -78,7 +78,7 @@ func RunOSVScanner(ctx context.Context, sbomPath string) ([]Finding, error) {
 	}
 
 	var stdout, stderr bytes.Buffer
-	cmd := exec.CommandContext(ctx, "osv-scanner", "--sbom", sbomPath, "--format", "json")
+	cmd := exec.CommandContext(ctx, "osv-scanner", "--sbom", sbomPath, "--format", "json") // #nosec G204 -- sbomPath is a user-supplied CLI argument, not attacker-controlled remote input
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 

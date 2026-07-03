@@ -50,7 +50,7 @@ func runDocVerify(cmd *cobra.Command, args []string) error {
 			IssuerRegex: docVerifyCertOIDCIssuerRegex,
 		}
 	} else {
-		fmt.Fprintln(cmd.ErrOrStderr(), "warning: no --certificate-identity/--certificate-oidc-issuer given; accepting any keyless signer")
+		fmt.Fprintln(cmd.ErrOrStderr(), "warning: no --certificate-identity/--certificate-oidc-issuer given; accepting any keyless signer") //nolint:errcheck // best-effort status output
 	}
 
 	res, err := artifactsign.VerifyFile(cmd.Context(), artifactPath, sigPath, identity)
@@ -58,13 +58,13 @@ func runDocVerify(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Fprintf(out, "Result: PASS  (%s)\n", sigPath)
+	fmt.Fprintf(out, "Result: PASS  (%s)\n", sigPath) //nolint:errcheck // best-effort status output
 	if res.Signature != nil && res.Signature.Certificate != nil {
-		fmt.Fprintf(out, "  signer:  %s\n", res.Signature.Certificate.SubjectAlternativeName)
-		fmt.Fprintf(out, "  issuer:  %s\n", res.Signature.Certificate.CertificateIssuer)
+		fmt.Fprintf(out, "  signer:  %s\n", res.Signature.Certificate.SubjectAlternativeName) //nolint:errcheck // best-effort status output
+		fmt.Fprintf(out, "  issuer:  %s\n", res.Signature.Certificate.CertificateIssuer)      //nolint:errcheck // best-effort status output
 	}
 	for _, ts := range res.VerifiedTimestamps {
-		fmt.Fprintf(out, "  %s:  %s (%s)\n", ts.Type, ts.Timestamp.Format("2006-01-02T15:04:05Z07:00"), ts.URI)
+		fmt.Fprintf(out, "  %s:  %s (%s)\n", ts.Type, ts.Timestamp.Format("2006-01-02T15:04:05Z07:00"), ts.URI) //nolint:errcheck // best-effort status output
 	}
 	return nil
 }

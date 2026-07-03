@@ -131,7 +131,7 @@ func New(product string) *TechnicalFile {
 
 // Load reads a previously saved TechnicalFile from path.
 func Load(path string) (*TechnicalFile, error) {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) // #nosec G304 -- path is caller-supplied (ultimately a CLI flag), not attacker-controlled remote input
 	if err != nil {
 		return nil, fmt.Errorf("reading %s: %w", path, err)
 	}
@@ -156,7 +156,7 @@ func Save(doc *TechnicalFile, path string) error {
 	if err != nil {
 		return fmt.Errorf("encoding technical file: %w", err)
 	}
-	if err := os.WriteFile(path, data, 0o644); err != nil {
+	if err := os.WriteFile(path, data, 0o644); err != nil { // #nosec G306 -- technical file is a shareable compliance document, not secret
 		return fmt.Errorf("writing %s: %w", path, err)
 	}
 	return nil

@@ -169,10 +169,12 @@ func (c *Client) search(ctx context.Context, params url.Values) ([]rawEntry, err
 	if err != nil {
 		return nil, fmt.Errorf("querying EUVD: %w", err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck // read-only handle; nothing to flush on close
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+		// Best-effort: body is only for the error message below, so a read
+		// failure just means an empty snippet, not a reason to fail differently.
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096)) //nolint:errcheck
 		return nil, fmt.Errorf("querying EUVD: unexpected status %s: %s", resp.Status, strings.TrimSpace(string(body)))
 	}
 

@@ -136,16 +136,16 @@ func runDocGenerate(cmd *cobra.Command, _ []string) error {
 	var declaration eudoc.Declaration
 	var annex7ProductLabel string
 	if _, err := os.Stat(annex7Path); err == nil {
-		a7, err := annex7.Load(annex7Path)
-		if err != nil {
-			return err
+		a7, loadErr := annex7.Load(annex7Path)
+		if loadErr != nil {
+			return loadErr
 		}
 		declaration = eudoc.FromAnnex7(a7)
 		annex7ProductLabel = a7.Product
 	} else if cmd.Flags().Changed("annex7") {
 		return fmt.Errorf("--annex7 %s: %w", annex7Path, err)
 	} else {
-		fmt.Fprintf(cmd.ErrOrStderr(), "warning: %s not found; generating without Annex VII auto-population\n", annex7Path)
+		fmt.Fprintf(cmd.ErrOrStderr(), "warning: %s not found; generating without Annex VII auto-population\n", annex7Path) //nolint:errcheck // best-effort status output
 	}
 
 	applyDocOverrides(cmd, &declaration)
@@ -161,7 +161,7 @@ func runDocGenerate(cmd *cobra.Command, _ []string) error {
 	if err := eudoc.Save(declaration, docOutput); err != nil {
 		return err
 	}
-	fmt.Fprintf(cmd.ErrOrStderr(), "wrote %s\n", docOutput)
+	fmt.Fprintf(cmd.ErrOrStderr(), "wrote %s\n", docOutput) //nolint:errcheck // best-effort status output
 
 	if !docNoPDF {
 		if err := generateDocPDF(cmd, declaration, annex7ProductLabel); err != nil {
@@ -177,7 +177,7 @@ func runDocGenerate(cmd *cobra.Command, _ []string) error {
 	if !docNoPDF {
 		outputs = docOutput + `" and "` + docPDF
 	}
-	fmt.Fprintf(cmd.ErrOrStderr(), "run \"crasec doc sign %s\" (or pass --sign next time) to Sigstore-sign the output(s)\n", outputs)
+	fmt.Fprintf(cmd.ErrOrStderr(), "run \"crasec doc sign %s\" (or pass --sign next time) to Sigstore-sign the output(s)\n", outputs) //nolint:errcheck // best-effort status output
 	return nil
 }
 
@@ -194,10 +194,10 @@ func generateDocPDF(cmd *cobra.Command, declaration eudoc.Declaration, annex7Pro
 	if err != nil {
 		return err
 	}
-	if err := os.WriteFile(docPDF, pdfBytes, 0o644); err != nil {
+	if err := os.WriteFile(docPDF, pdfBytes, 0o644); err != nil { // #nosec G306 -- report is a shareable compliance document, not secret
 		return fmt.Errorf("writing %s: %w", docPDF, err)
 	}
-	fmt.Fprintf(cmd.ErrOrStderr(), "wrote %s\n", docPDF)
+	fmt.Fprintf(cmd.ErrOrStderr(), "wrote %s\n", docPDF) //nolint:errcheck // best-effort status output
 	return nil
 }
 
@@ -260,7 +260,7 @@ func applyLanguages(cmd *cobra.Command, d *eudoc.Declaration) error {
 	if strings.EqualFold(raw, "all") {
 		codes = doc.AvailableLanguages()
 		if missing := doc.MissingLanguages(); len(missing) > 0 {
-			fmt.Fprintf(cmd.ErrOrStderr(), "note: %d of the EU's 24 official languages don't have an embedded translation yet and are omitted: %s\n",
+			fmt.Fprintf(cmd.ErrOrStderr(), "note: %d of the EU's 24 official languages don't have an embedded translation yet and are omitted: %s\n", //nolint:errcheck // best-effort status output
 				len(missing), strings.Join(missing, ", "))
 		}
 	} else {
@@ -302,7 +302,7 @@ func signDocOutputs(cmd *cobra.Command) error {
 		if err != nil {
 			return fmt.Errorf("signing %s: %w", path, err)
 		}
-		fmt.Fprintf(cmd.ErrOrStderr(), "signed %s -> %s\n", path, sigPath)
+		fmt.Fprintf(cmd.ErrOrStderr(), "signed %s -> %s\n", path, sigPath) //nolint:errcheck // best-effort status output
 	}
 	return nil
 }

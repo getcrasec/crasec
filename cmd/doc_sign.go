@@ -34,6 +34,6 @@ func runDocSign(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Fprintf(cmd.OutOrStdout(), "signed %s -> %s\n", path, sigPath)
+	fmt.Fprintf(cmd.OutOrStdout(), "signed %s -> %s\n", path, sigPath) //nolint:errcheck // best-effort status output
 	return nil
 }

@@ -150,7 +150,7 @@ func runCSAFGenerate(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("writing CSAF advisory: %w", err)
 	}
 
-	fmt.Fprintf(cmd.ErrOrStderr(), "wrote CSAF advisory with %d vulnerabilities\n", len(adv.Vulnerabilities))
+	fmt.Fprintf(cmd.ErrOrStderr(), "wrote CSAF advisory with %d vulnerabilities\n", len(adv.Vulnerabilities)) //nolint:errcheck // best-effort status output
 	return nil
 }
 
@@ -214,7 +214,7 @@ func resolveCSAFWriter() (io.Writer, func(), error) {
 	if csafOutput == "-" {
 		return os.Stdout, func() {}, nil
 	}
-	f, err := os.Create(csafOutput)
+	f, err := os.Create(csafOutput) // #nosec G304 -- csafOutput is a user-supplied CLI argument, not attacker-controlled remote input
 	if err != nil {
 		return nil, nil, fmt.Errorf("opening output file %s: %w", csafOutput, err)
 	}

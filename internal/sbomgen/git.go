@@ -25,12 +25,12 @@ func CloneRepo(ctx context.Context, repoURL string, statusWriter io.Writer) (dir
 
 	cleanup = func() {
 		if removeErr := os.RemoveAll(tmpDir); removeErr != nil {
-			fmt.Fprintf(statusWriter, "warning: failed to remove temp dir %s: %v\n", tmpDir, removeErr)
+			fmt.Fprintf(statusWriter, "warning: failed to remove temp dir %s: %v\n", tmpDir, removeErr) //nolint:errcheck // best-effort status output
 		}
 	}
 
-	fmt.Fprintf(statusWriter, "cloning %s...\n", repoURL)
-	c := exec.CommandContext(ctx, "git", "clone", "--depth=1", repoURL, tmpDir)
+	fmt.Fprintf(statusWriter, "cloning %s...\n", repoURL)                       //nolint:errcheck // best-effort status output
+	c := exec.CommandContext(ctx, "git", "clone", "--depth=1", repoURL, tmpDir) // #nosec G204 -- repoURL is a user-supplied CLI argument, not attacker-controlled remote input
 	c.Stderr = statusWriter
 	if err := c.Run(); err != nil {
 		cleanup()

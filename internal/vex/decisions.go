@@ -87,7 +87,7 @@ func (d Decision) deadline() (*time.Time, error) {
 // example, fails to load rather than silently producing an invalid VEX
 // document.
 func LoadDecisionsFile(path string) ([]Decision, map[string]Statement, error) {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) // #nosec G304 -- path is caller-supplied (ultimately a CLI flag), not attacker-controlled remote input
 	if err != nil {
 		return nil, nil, fmt.Errorf("reading decisions file %s: %w", path, err)
 	}

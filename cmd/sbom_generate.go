@@ -82,9 +82,9 @@ func runGenerate(cmd *cobra.Command, _ []string) error {
 	}
 
 	if sbomgen.IsRemoteGitURL(target) {
-		tmpDir, cleanup, err := sbomgen.CloneRepo(ctx, target, cmd.ErrOrStderr())
-		if err != nil {
-			return err
+		tmpDir, cleanup, cloneErr := sbomgen.CloneRepo(ctx, target, cmd.ErrOrStderr())
+		if cloneErr != nil {
+			return cloneErr
 		}
 		defer cleanup()
 		target = tmpDir
@@ -118,7 +118,7 @@ func runGenerate(cmd *cobra.Command, _ []string) error {
 				return fmt.Errorf("attesting SBOM to %s: %w", imageRef, err)
 			}
 		} else {
-			fmt.Fprintf(cmd.ErrOrStderr(), "note: skipping attestation push for %s (not a registry-hosted image reference)\n", target)
+			fmt.Fprintf(cmd.ErrOrStderr(), "note: skipping attestation push for %s (not a registry-hosted image reference)\n", target) //nolint:errcheck // best-effort status output
 		}
 	}
 	return nil
@@ -131,13 +131,13 @@ func resolveWriter(cmd *cobra.Command) (io.Writer, func(), error) {
 	if generateOutput == "" {
 		return cmd.OutOrStdout(), func() {}, nil
 	}
-	f, err := os.Create(generateOutput)
+	f, err := os.Create(generateOutput) // #nosec G304 -- generateOutput is a user-supplied CLI argument, not attacker-controlled remote input
 	if err != nil {
 		return nil, nil, fmt.Errorf("opening output file %s: %w", generateOutput, err)
 	}
 	return f, func() {
 		if cerr := f.Close(); cerr != nil {
-			fmt.Fprintf(cmd.ErrOrStderr(), "warning: closing %s: %v\n", generateOutput, cerr)
+			fmt.Fprintf(cmd.ErrOrStderr(), "warning: closing %s: %v\n", generateOutput, cerr) //nolint:errcheck // best-effort status output
 		}
 	}, nil
 }

@@ -39,10 +39,10 @@ func AttestSBOM(ctx context.Context, imageRef string, bom *cyclonedx.BOM, status
 		return fmt.Errorf("encoding SBOM predicate: %w", err)
 	}
 
-	fmt.Fprintf(statusWriter, "signing and pushing in-toto attestation to %s...\n", imageRef)
+	fmt.Fprintf(statusWriter, "signing and pushing in-toto attestation to %s...\n", imageRef) //nolint:errcheck // best-effort status output
 	if err := ociattest.AttestAndPush(ctx, imageRef, cyclonedxPredicateType, buf.Bytes()); err != nil {
 		return err
 	}
-	fmt.Fprintf(statusWriter, "attestation pushed as OCI referrer of %s\n", imageRef)
+	fmt.Fprintf(statusWriter, "attestation pushed as OCI referrer of %s\n", imageRef) //nolint:errcheck // best-effort status output
 	return nil
 }

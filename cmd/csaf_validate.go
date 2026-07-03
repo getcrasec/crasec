@@ -30,7 +30,7 @@ func runCSAFValidate(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 	path := args[0]
 
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) // #nosec G304 -- path is a user-supplied CLI argument, not attacker-controlled remote input
 	if err != nil {
 		return fmt.Errorf("reading %s: %w", path, err)
 	}
@@ -47,13 +47,13 @@ func runCSAFValidate(cmd *cobra.Command, args []string) error {
 
 	out := cmd.OutOrStdout()
 	if len(violations) == 0 {
-		fmt.Fprintf(out, "Result: PASS  (%s conforms to CSAF 2.0)\n", path)
+		fmt.Fprintf(out, "Result: PASS  (%s conforms to CSAF 2.0)\n", path) //nolint:errcheck // best-effort status output
 		return nil
 	}
 
-	fmt.Fprintf(out, "Result: FAIL  (%d schema violation(s) in %s)\n", len(violations), path)
+	fmt.Fprintf(out, "Result: FAIL  (%d schema violation(s) in %s)\n", len(violations), path) //nolint:errcheck // best-effort status output
 	for _, v := range violations {
-		fmt.Fprintf(out, "  %s\n", v)
+		fmt.Fprintf(out, "  %s\n", v) //nolint:errcheck // best-effort status output
 	}
 	os.Exit(1)
 	return nil

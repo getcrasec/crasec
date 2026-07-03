@@ -86,8 +86,8 @@ func runCSAFPublish(cmd *cobra.Command, _ []string) error {
 	}
 
 	out := cmd.ErrOrStderr()
-	fmt.Fprintf(out, "published %s -> %s\n", res.TrackingID, res.AdvisoryPath)
-	fmt.Fprintf(out, "wrote %s (%d advisories)\n", res.IndexPath, res.AdvisoryCount)
-	fmt.Fprintf(out, "wrote %s\n", res.ProviderMetadataPath)
+	fmt.Fprintf(out, "published %s -> %s\n", res.TrackingID, res.AdvisoryPath)       //nolint:errcheck // best-effort status output
+	fmt.Fprintf(out, "wrote %s (%d advisories)\n", res.IndexPath, res.AdvisoryCount) //nolint:errcheck // best-effort status output
+	fmt.Fprintf(out, "wrote %s\n", res.ProviderMetadataPath)                         //nolint:errcheck // best-effort status output
 	return nil
 }

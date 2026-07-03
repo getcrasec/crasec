@@ -72,11 +72,14 @@ func Export(opts Options) (_ *Manifest, err error) {
 		return nil, fmt.Errorf("creating %s: %w", opts.Output, createErr)
 	}
 	defer func() {
-		zf.Close()
+		if closeErr := zf.Close(); closeErr != nil && err == nil {
+			err = fmt.Errorf("closing %s: %w", opts.Output, closeErr)
+		}
 		if err != nil {
 			// Don't leave a partial/corrupt ZIP behind for a later "bundle
-			// export" run to trip over.
-			os.Remove(opts.Output)
+			// export" run to trip over. Best-effort: we're already
+			// returning an error, so a failed cleanup isn't actionable.
+			_ = os.Remove(opts.Output) //nolint:errcheck
 		}
 	}()
 

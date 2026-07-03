@@ -109,20 +109,25 @@ func runBundleExport(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	fmt.Fprintf(cmd.ErrOrStderr(), "wrote %s (%d files)\n", bundleOutput, len(manifest.Files))
+	// Best-effort status output to stderr; a write failure here doesn't
+	// affect the command's actual result.
+	fmt.Fprintf(cmd.ErrOrStderr(), "wrote %s (%d files)\n", bundleOutput, len(manifest.Files)) //nolint:errcheck
 	for _, f := range manifest.Files {
-		fmt.Fprintf(cmd.ErrOrStderr(), "  %-24s sha256:%s\n", f.Name, f.SHA256[:12]+"...")
+		fmt.Fprintf(cmd.ErrOrStderr(), "  %-24s sha256:%s\n", f.Name, f.SHA256[:12]+"...") //nolint:errcheck
 	}
 	return nil
 }
 
+// printMissingArtifacts writes a best-effort status report; a write failure
+// here doesn't change the fact that artifacts are missing, which the caller
+// reports separately as the actual command error.
 func printMissingArtifacts(w io.Writer, missing []bundle.Artifact) {
-	fmt.Fprintf(w, "%d required artifact(s) not found:\n\n", len(missing))
+	fmt.Fprintf(w, "%d required artifact(s) not found:\n\n", len(missing)) //nolint:errcheck
 	tw := tabwriter.NewWriter(w, 0, 4, 2, ' ', 0)
-	fmt.Fprintln(tw, "FILE\tEXPECTED AT\tGENERATE WITH")
+	fmt.Fprintln(tw, "FILE\tEXPECTED AT\tGENERATE WITH") //nolint:errcheck
 	for _, m := range missing {
-		fmt.Fprintf(tw, "%s\t%s\t%s\n", m.BundleName, m.SourcePath, m.Hint)
+		fmt.Fprintf(tw, "%s\t%s\t%s\n", m.BundleName, m.SourcePath, m.Hint) //nolint:errcheck
 	}
-	tw.Flush()
-	fmt.Fprintln(w)
+	tw.Flush()      //nolint:errcheck
+	fmt.Fprintln(w) //nolint:errcheck
 }

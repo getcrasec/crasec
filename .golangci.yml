@@ -15,6 +15,12 @@ linters:
 
     govet:
       enable-all: true
+      disable:
+        # Field order in these structs is chosen for human-readable JSON
+        # output (SBOM/VEX/Annex VII/EU DoC field order matters to the
+        # auditors reading them); the memory-layout win doesn't matter for
+        # a one-shot CLI, so it's not worth reordering for this.
+        - fieldalignment
 
     gosec:
       excludes:
@@ -23,3 +29,4 @@ linters:
 
 issues:
   max-same-issues: 0
+  max-issues-per-linter: 0

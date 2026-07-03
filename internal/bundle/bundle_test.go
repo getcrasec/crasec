@@ -31,7 +31,7 @@ func writeAll(t *testing.T, dir string) Options {
 	rewrite := func(rel *string) {
 		content := "content of " + *rel
 		abs := filepath.Join(dir, *rel)
-		if err := os.WriteFile(abs, []byte(content), 0o644); err != nil {
+		if err := os.WriteFile(abs, []byte(content), 0o644); err != nil { // #nosec G306 -- test fixture, not sensitive
 			t.Fatal(err)
 		}
 		*rel = abs
@@ -101,7 +101,7 @@ func TestExport_ProducesValidZipWithAllEntries(t *testing.T) {
 	if err != nil {
 		t.Fatalf("opening bundle as zip: %v", err)
 	}
-	defer zr.Close()
+	defer zr.Close() //nolint:errcheck // read-only handle; nothing to flush on close
 
 	names := map[string]bool{}
 	for _, f := range zr.File {
@@ -139,7 +139,7 @@ func TestExport_ManifestSHA256MatchesActualZipContent(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer zr.Close()
+	defer zr.Close() //nolint:errcheck // read-only handle; nothing to flush on close
 
 	byName := map[string]*zip.File{}
 	for _, f := range zr.File {
@@ -166,7 +166,7 @@ func TestExport_ManifestSHA256MatchesActualZipContent(t *testing.T) {
 				break
 			}
 		}
-		rc.Close()
+		rc.Close() //nolint:errcheck // read-only handle; nothing to flush on close
 
 		got := hex.EncodeToString(h.Sum(nil))
 		if got != entry.SHA256 {
@@ -188,7 +188,7 @@ func TestExport_ManifestJSONInsideZipMatchesReturnedManifest(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer zr.Close()
+	defer zr.Close() //nolint:errcheck // read-only handle; nothing to flush on close
 
 	for _, f := range zr.File {
 		if f.Name != "manifest.json" {
@@ -198,7 +198,7 @@ func TestExport_ManifestJSONInsideZipMatchesReturnedManifest(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer rc.Close()
+		defer rc.Close() //nolint:errcheck // read-only handle; nothing to flush on close
 
 		var fromZip Manifest
 		if err := json.NewDecoder(rc).Decode(&fromZip); err != nil {
@@ -224,7 +224,7 @@ func TestExport_ReadmeExplainsEveryBundledFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer zr.Close()
+	defer zr.Close() //nolint:errcheck // read-only handle; nothing to flush on close
 
 	for _, f := range zr.File {
 		if f.Name != "README.txt" {
@@ -234,7 +234,7 @@ func TestExport_ReadmeExplainsEveryBundledFile(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer rc.Close()
+		defer rc.Close() //nolint:errcheck // read-only handle; nothing to flush on close
 		buf := make([]byte, 0, 8192)
 		tmp := make([]byte, 4096)
 		for {

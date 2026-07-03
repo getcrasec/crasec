@@ -165,7 +165,7 @@ func MissingArtifacts(artifacts []Artifact) []Artifact {
 // Sigstore bundle alike), unlike trying to extract a timestamp from each
 // format's own internal structure).
 func hashFile(path string) (data []byte, sha256Hex string, modTime time.Time, err error) {
-	data, err = os.ReadFile(path)
+	data, err = os.ReadFile(path) // #nosec G304 -- path is caller-supplied (ultimately a CLI flag), not attacker-controlled remote input
 	if err != nil {
 		return nil, "", time.Time{}, fmt.Errorf("reading %s: %w", path, err)
 	}
