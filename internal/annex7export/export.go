@@ -7,18 +7,15 @@ package annex7export
 
 import (
 	"bytes"
-	"embed"
 	"fmt"
 	"html/template"
 	"time"
 
+	"github.com/getcrasec/crasec/export"
 	"github.com/getcrasec/crasec/internal/annex7"
 )
 
-//go:embed templates/annex7.html
-var templateFS embed.FS
-
-var reportTemplate = template.Must(template.ParseFS(templateFS, "templates/annex7.html"))
+var reportTemplate = template.Must(template.ParseFS(export.Templates, "templates/annex7.html"))
 
 // templateData is what templates/annex7.html renders.
 type templateData struct {

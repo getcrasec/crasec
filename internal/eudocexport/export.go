@@ -6,18 +6,15 @@ package eudocexport
 
 import (
 	"bytes"
-	"embed"
 	"fmt"
 	"html/template"
 	"time"
 
+	"github.com/getcrasec/crasec/export"
 	"github.com/getcrasec/crasec/internal/eudoc"
 )
 
-//go:embed templates/eudoc.html
-var templateFS embed.FS
-
-var reportTemplate = template.Must(template.ParseFS(templateFS, "templates/eudoc.html"))
+var reportTemplate = template.Must(template.ParseFS(export.Templates, "templates/eudoc.html"))
 
 // templateData is what templates/eudoc.html renders.
 type templateData struct {

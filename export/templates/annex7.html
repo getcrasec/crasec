@@ -133,14 +133,7 @@
     padding: 2px 0 var(--space-4) var(--space-4);
     margin-bottom: var(--space-5);
   }
-  .header-brand .wordmark {
-    font-family: var(--font-body);
-    font-size: var(--text-md);
-    font-weight: 600;
-    letter-spacing: var(--tracking-wider);
-    text-transform: uppercase;
-    color: var(--text-primary);
-  }
+  .doc-logo { display: block; }
   .doc-meta { text-align: right; font-size: var(--text-xs); color: var(--text-secondary); }
   .doc-meta .doc-title {
     font-family: var(--font-body);
@@ -301,8 +294,16 @@
 <div class="document">
 
 <header class="doc-header">
-  <div class="header-brand">
-    <span class="wordmark">Crasec</span>
+  <div class="doc-logo">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 32" width="120" height="32" role="img" aria-label="Crasec">
+      <title>Crasec</title>
+      <rect x="0" y="0" width="32" height="32" fill="#1D9E75"/>
+      <line x1="0" y1="32" x2="32" y2="0" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="square"/>
+      <text x="42" y="24"
+        font-family="Inter,system-ui,sans-serif"
+        font-size="22" font-weight="700" letter-spacing="-0.8"
+        fill="#141412">crasec</text>
+    </svg>
   </div>
   <div class="doc-meta">
     <div class="doc-title">CRA Annex VII &mdash; Technical Documentation</div>
