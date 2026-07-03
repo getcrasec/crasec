@@ -35,11 +35,12 @@ cd "$SEED"
 "$CRASEC" sbom generate -o sbom.cdx.json
 "$CRASEC" sbom sign sbom.cdx.json
 
-# --osv-scanner=false: keeps the demo to a single dependency (crasec
-# itself). vex-decisions.yaml below was built from this same grype-only
-# finding set — if you drop this flag, regenerate that file too, since
-# osv-scanner surfaces additional CVEs it won't have decisions for.
-"$CRASEC" vuln correlate --sbom sbom.cdx.json --osv-scanner=false -o findings.json
+# osv-scanner is off by default, which keeps the demo to a single
+# dependency (crasec itself). vex-decisions.yaml below was built from this
+# same grype-only finding set — if you pass --osv-scanner, regenerate that
+# file too, since osv-scanner surfaces additional CVEs it won't have
+# decisions for.
+"$CRASEC" vuln correlate --sbom sbom.cdx.json -o findings.json
 
 "$CRASEC" vex generate --sbom sbom.cdx.json --findings findings.json \
   --from-file "../$FIXTURE/vex-decisions.yaml" -o vex.cdx.json

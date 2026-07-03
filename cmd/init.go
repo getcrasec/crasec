@@ -150,13 +150,39 @@ func nonInteractiveConfig(cwd string, existing *config.Config) (*config.Config, 
 	return cfg, nil
 }
 
+// printNextSteps prints the full pipeline to build the CRA evidence bundle
+// "bundle export" assembles: every step other than csaf generate and doc
+// generate's signatory fields reads its remaining inputs from cfg or the
+// previous step's default output filename, so it runs as shown. csaf
+// generate's tracking ID/title/publisher and doc generate's signatory are
+// manufacturer decisions crasec can't infer, so those stay as placeholders
+// to fill in.
 func printNextSteps(w io.Writer, cfg *config.Config) {
-	fmt.Fprintf(w, "\nWrote %s for %q\n\n", config.FileName, cfg.Product.Name)                                         //nolint:errcheck // best-effort status output
-	fmt.Fprintln(w, "What's next:")                                                                                    //nolint:errcheck // best-effort status output
-	fmt.Fprintln(w, "  → Run:  crasec sbom generate")                                                                  //nolint:errcheck // best-effort status output
-	fmt.Fprintln(w, "  → Then: crasec vuln correlate --sbom sbom.cdx.json")                                            //nolint:errcheck // best-effort status output
-	fmt.Fprintln(w, "  → Then: crasec vex generate --sbom sbom.cdx.json --findings findings.json")                     //nolint:errcheck // best-effort status output
-	fmt.Fprintln(w, "  → Then: crasec bundle export")                                                                  //nolint:errcheck // best-effort status output
-	fmt.Fprintln(w)                                                                                                    //nolint:errcheck // best-effort status output
-	fmt.Fprintf(w, "Each of those now reads its defaults from %s, no flags needed to get started.\n", config.FileName) //nolint:errcheck // best-effort status output
+	fmt.Fprintf(w, "\nWrote %s for %q\n\n", config.FileName, cfg.Product.Name)                                          //nolint:errcheck // best-effort status output
+	fmt.Fprintln(w, "What's next, to build the full CRA evidence bundle:")                                              //nolint:errcheck // best-effort status output
+	fmt.Fprintln(w)                                                                                                     //nolint:errcheck // best-effort status output
+	fmt.Fprintln(w, "  1. crasec sbom generate")                                                                        //nolint:errcheck // best-effort status output
+	fmt.Fprintln(w, "     crasec sbom sign sbom.cdx.json")                                                              //nolint:errcheck // best-effort status output
+	fmt.Fprintln(w)                                                                                                     //nolint:errcheck // best-effort status output
+	fmt.Fprintln(w, "  2. crasec vuln correlate --sbom sbom.cdx.json")                                                  //nolint:errcheck // best-effort status output
+	fmt.Fprintln(w)                                                                                                     //nolint:errcheck // best-effort status output
+	fmt.Fprintln(w, "  3. crasec vex generate --sbom sbom.cdx.json --findings findings.json")                           //nolint:errcheck // best-effort status output
+	fmt.Fprintln(w, "     crasec vex sign vex.cdx.json")                                                                //nolint:errcheck // best-effort status output
+	fmt.Fprintln(w)                                                                                                     //nolint:errcheck // best-effort status output
+	fmt.Fprintln(w, "  4. crasec csaf generate --findings findings.json --sbom sbom.cdx.json \\")                       //nolint:errcheck // best-effort status output
+	fmt.Fprintf(w, "       --tracking-id CRASEC-2026-0001 --title \"Security advisory for %s\" \\\n", cfg.Product.Name) //nolint:errcheck // best-effort status output
+	fmt.Fprintf(w, "       --publisher-name %q --publisher-namespace https://example.com\n", cfg.Manufacturer.Name)     //nolint:errcheck // best-effort status output
+	fmt.Fprintln(w, "     crasec csaf sign advisory.json")                                                              //nolint:errcheck // best-effort status output
+	fmt.Fprintln(w)                                                                                                     //nolint:errcheck // best-effort status output
+	fmt.Fprintf(w, "  5. crasec annex7 scaffold --product %s\n", cfg.Product.Name)                                      //nolint:errcheck // best-effort status output
+	fmt.Fprintf(w, "     crasec annex7 export --input annex7-%s.json\n", cfg.Product.Name)                              //nolint:errcheck // best-effort status output
+	fmt.Fprintln(w)                                                                                                     //nolint:errcheck // best-effort status output
+	fmt.Fprintf(w, "  6. crasec doc generate --annex7 annex7-%s.json \\\n", cfg.Product.Name)                           //nolint:errcheck // best-effort status output
+	fmt.Fprintln(w, "       --signatory-name \"...\" --signatory-function \"...\" --signatory-place ... --sign")        //nolint:errcheck // best-effort status output
+	fmt.Fprintln(w)                                                                                                     //nolint:errcheck // best-effort status output
+	fmt.Fprintln(w, "  7. crasec bundle export")                                                                        //nolint:errcheck // best-effort status output
+	fmt.Fprintln(w)                                                                                                     //nolint:errcheck // best-effort status output
+	fmt.Fprintf(w, "Steps 1-3, 5, and 7 read their product/manufacturer defaults from %s; step 4's\n", config.FileName) //nolint:errcheck // best-effort status output
+	fmt.Fprintln(w, "tracking ID/title/publisher and step 6's signatory are manufacturer decisions")                    //nolint:errcheck // best-effort status output
+	fmt.Fprintln(w, "crasec can't infer, so fill those in before running.")                                             //nolint:errcheck // best-effort status output
 }

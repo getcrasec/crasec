@@ -32,18 +32,18 @@ go install github.com/getcrasec/crasec@latest
 
 # From your project's root
 crasec init                                    # guided setup: detects ecosystem, writes .crasec.yaml
-crasec sbom generate -o sbom.cdx.json          # CycloneDX 1.6 SBOM (syft, +cdxgen if installed)
+crasec sbom generate                           # CycloneDX 1.6 SBOM (syft, +cdxgen if installed) → sbom.cdx.json
 crasec sbom validate sbom.cdx.json             # BSI TR-03183-2 compliance score, 0-100%
-crasec vuln correlate --sbom sbom.cdx.json --osv-scanner=false -o findings.json   # Grype, scored for CRA relevance
+crasec vuln correlate --sbom sbom.cdx.json     # Grype, scored for CRA relevance → findings.json
 ```
 
-Grype (a Go library, no separate install) is enough to get scored findings above. Add broader coverage — Go modules, Python, Rust, and distro advisories OSV.dev often has that Grype's NVD-based database misses — with `go install github.com/google/osv-scanner/cmd/osv-scanner@latest` and dropping `--osv-scanner=false`.
+Grype (a Go library, no separate install) is enough to get scored findings above. Add broader coverage — Go modules, Python, Rust, and distro advisories OSV.dev often has that Grype's NVD-based database misses — with `go install github.com/google/osv-scanner/cmd/osv-scanner@latest` and passing `--osv-scanner` (off by default, so a fresh install works without that extra dependency).
 
 `vuln correlate` against a real project looks like this (Apache Struts 2.3.20 — yes, that CVE-2017-5638):
 
 ```
 found 142 vulnerability matches
-15 CRA-CRITICAL — Article 14 report required within 24h
+15 CRA-CRITICAL: Article 14 report required within 24h
 
 VULNERABILITY     PACKAGE                           CVSS  KEV  EPSS  CRA SCORE  CATEGORY
 CVE-2017-5638     struts2-core@2.3.20               10.0  YES  1.00  30.00      CRA-CRITICAL (ARTICLE 14)
@@ -67,14 +67,15 @@ crasec csaf generate --sbom sbom.cdx.json --findings findings.json \
   --tracking-id CRASEC-2026-0001 --title "Security advisory for myapp" \
   --publisher-name "Acme Corp" --publisher-namespace https://acme.example
 crasec annex7 scaffold --product myapp              # guided wizard — 10 required sections
-crasec annex7 export --input annex7-myapp.json -o annex7.pdf
-crasec doc generate --product myapp --annex7 annex7-myapp.json \
-  --manufacturer-name "Acme Corp" --manufacturer-address "1 Rue de la Paix, 75002 Paris, France" \
+crasec annex7 export --input annex7-myapp.json
+crasec doc generate --annex7 annex7-myapp.json \
   --signatory-name "Jane Doe" --signatory-function CTO --signatory-place Paris --sign
 
 crasec sbom sign sbom.cdx.json && crasec vex sign vex.cdx.json && crasec csaf sign advisory.json
-crasec bundle export --product myapp -o evidence-bundle.zip
+crasec bundle export
 ```
+
+`sbom generate --target`, `bundle export --product`, and `doc generate`'s `--product`/`--manufacturer-*` all default from the `.crasec.yaml` `crasec init` wrote at the top of this walkthrough. `vex generate` and `csaf generate` instead read product metadata straight from `--sbom`'s own `metadata.component`, and `annex7 scaffold` always needs an explicit `--product` — plus the manufacturer decisions above (CSAF's tracking ID/title/publisher, the DoC's signatory) that no config file can supply.
 
 Every signature above uses [Sigstore](https://www.sigstore.dev/) keyless signing: a browser OIDC login locally, or your CI's ambient identity token — no key management. `bundle export` refuses to write a partial ZIP; if anything's missing it lists exactly which artifact and the command that produces it.
 
@@ -113,7 +114,7 @@ jobs:
           crasec sbom sign sbom.cdx.json
 
       - name: Correlate vulnerabilities and gate on CRA-CRITICAL findings
-        run: crasec vuln correlate --sbom sbom.cdx.json -o findings.json
+        run: crasec vuln correlate --sbom sbom.cdx.json --osv-scanner -o findings.json
 
       - name: Generate and sign VEX
         run: |

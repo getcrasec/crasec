@@ -43,14 +43,14 @@ By default every artifact is looked up at the same filename its own
 generate command defaults to; --sbom/--vex/--csaf/--annex7-json/... let you
 point at different paths if you used non-default output locations.
 
-  crasec sbom generate --target . -o sbom.cdx.json && crasec sbom sign sbom.cdx.json
-  crasec vuln correlate --sbom sbom.cdx.json -o findings.json
-  crasec vex generate --sbom sbom.cdx.json --findings findings.json -o vex.cdx.json && crasec vex sign vex.cdx.json
-  crasec csaf generate --findings findings.json --tracking-id ... -o advisory.json && crasec csaf sign advisory.json
+  crasec sbom generate --target . && crasec sbom sign sbom.cdx.json
+  crasec vuln correlate --sbom sbom.cdx.json
+  crasec vex generate --sbom sbom.cdx.json --findings findings.json && crasec vex sign vex.cdx.json
+  crasec csaf generate --findings findings.json --tracking-id ... && crasec csaf sign advisory.json
   crasec annex7 scaffold --product myapp
-  crasec annex7 export --input annex7-myapp.json -o annex7.pdf
+  crasec annex7 export --input annex7-myapp.json
   crasec doc generate --product myapp --annex7 annex7-myapp.json ... --sign
-  crasec bundle export --product myapp -o evidence-bundle.zip`,
+  crasec bundle export --product myapp`,
 	RunE: runBundleExport,
 }
 

@@ -59,7 +59,7 @@ func init() {
 	sbomCmd.AddCommand(sbomGenerateCmd)
 	sbomGenerateCmd.Flags().StringVar(&generateTarget, "target", "", "scan target: ./path, docker:image:tag, or https://github.com/org/repo (default: .crasec.yaml's scan.target, from \"crasec init\")")
 	sbomGenerateCmd.Flags().StringVar(&generateFormat, "format", formatCycloneDX, `output format: "cyclonedx" (default) or "spdx"`)
-	sbomGenerateCmd.Flags().StringVarP(&generateOutput, "output", "o", "", "write SBOM to this file instead of stdout")
+	sbomGenerateCmd.Flags().StringVarP(&generateOutput, "output", "o", "sbom.cdx.json", "write SBOM to this file (\"-\" for stdout)")
 	if err := sbomGenerateCmd.MarkFlagRequired("target"); err != nil {
 		panic(err)
 	}
@@ -125,10 +125,10 @@ func runGenerate(cmd *cobra.Command, _ []string) error {
 }
 
 // resolveWriter returns the io.Writer to use for SBOM output.
-// When --output is set it opens (or creates) the named file; otherwise it
-// returns cmd.OutOrStdout(). The caller must invoke the returned close func.
+// --output "-" writes to stdout; otherwise it opens (or creates) the named
+// file. The caller must invoke the returned close func.
 func resolveWriter(cmd *cobra.Command) (io.Writer, func(), error) {
-	if generateOutput == "" {
+	if generateOutput == "-" {
 		return cmd.OutOrStdout(), func() {}, nil
 	}
 	f, err := os.Create(generateOutput) // #nosec G304 -- generateOutput is a user-supplied CLI argument, not attacker-controlled remote input

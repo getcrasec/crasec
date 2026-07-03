@@ -93,8 +93,8 @@ Triage decisions can come from three places (pick one):
                                   every finding has a decision.
 
 Typical pipeline:
-  crasec sbom generate --target ./path -o sbom.cdx.json
-  crasec vuln correlate --sbom sbom.cdx.json -o findings.json
+  crasec sbom generate --target ./path
+  crasec vuln correlate --sbom sbom.cdx.json
   crasec vex generate --sbom sbom.cdx.json --findings findings.json
 
 CI pipeline:
@@ -110,7 +110,7 @@ func init() {
 	vexGenerateCmd.Flags().StringVar(&vexStatementsPath, "statements", "", "path to a JSON array of pre-made triage decisions (skips the interactive TUI)")
 	vexGenerateCmd.Flags().StringVar(&vexFromFilePath, "from-file", "", "path to a version-controlled YAML decisions file; exits non-zero if any finding lacks a decision (CI pipelines)")
 	vexGenerateCmd.Flags().StringVar(&vexDraftPath, "draft", "", "where interactive triage progress is saved/resumed (default: .crasec-vex-draft.json)")
-	vexGenerateCmd.Flags().StringVarP(&vexOutput, "output", "o", "", "write the VEX document to this file instead of stdout")
+	vexGenerateCmd.Flags().StringVarP(&vexOutput, "output", "o", "vex.cdx.json", "write the VEX document to this file (\"-\" for stdout)")
 	vexGenerateCmd.Flags().StringVar(&vexProductName, "product-name", "", "name of the product this VEX document is about (default: --sbom's metadata.component.name)")
 	vexGenerateCmd.Flags().StringVar(&vexProductVersion, "product-version", "", "version of the product this VEX document is about (default: --sbom's metadata.component.version)")
 	vexGenerateCmd.Flags().StringVar(&vexProductPURL, "product-purl", "", "package URL identifying the product (default: --sbom's metadata.component.purl)")
@@ -340,10 +340,10 @@ func loadVEXStatements(path string) (map[string]vex.Statement, error) {
 }
 
 // resolveVexWriter returns the io.Writer to use for the VEX document.
-// When --output is set it opens (or creates) the named file; otherwise it
-// returns cmd.OutOrStdout(). The caller must invoke the returned close func.
+// --output "-" writes to stdout; otherwise it opens (or creates) the named
+// file. The caller must invoke the returned close func.
 func resolveVexWriter(cmd *cobra.Command) (io.Writer, func(), error) {
-	if vexOutput == "" {
+	if vexOutput == "-" {
 		return cmd.OutOrStdout(), func() {}, nil
 	}
 	f, err := os.Create(vexOutput) // #nosec G304 -- vexOutput is a user-supplied CLI argument, not attacker-controlled remote input

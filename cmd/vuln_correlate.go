@@ -34,16 +34,16 @@ var vulnCorrelateCmd = &cobra.Command{
 vulnerability database, run as a Go library rather than an external process)
 and report one finding per matched vulnerability/component pair.
 
-By default this also runs osv-scanner (https://github.com/google/osv-scanner)
-against the same SBOM and merges its results with Grype's, deduplicating by
+Pass --osv-scanner to also run osv-scanner (https://github.com/google/osv-scanner)
+against the same SBOM and merge its results with Grype's, deduplicating by
 vulnerability ID (following CVE/GHSA/OSV aliases). OSV.dev, which
 osv-scanner queries, often covers Go modules, Python packages, Rust crates,
 and distro advisories that Grype's NVD-based database misses; merged
 findings carry data from whichever scanner is more reliable for that field
 (OSV-Scanner for fix versions, Grype for CVSS), and every finding records
 which scanner(s) reported it. osv-scanner must already be installed and on
-PATH (go install github.com/google/osv-scanner/cmd/osv-scanner@latest); use
---osv-scanner=false to skip it.
+PATH (go install github.com/google/osv-scanner/cmd/osv-scanner@latest); it's
+off by default so a fresh install works without that extra dependency.
 
 Findings are also cross-referenced against CISA's Known Exploited
 Vulnerabilities (KEV) catalog by CVE ID (following aliases), flagging
@@ -80,10 +80,11 @@ off by default: a single failed request is treated as "EUVD is down" and
 correlation proceeds without EUVD data rather than failing the run.
 
 Typical pipeline:
-  crasec sbom generate --target ./path -o sbom.cdx.json
+  crasec sbom generate --target ./path
   crasec vuln correlate --sbom sbom.cdx.json
 
-Findings are written as a JSON array to stdout (or --output); each finding
+Findings are written as a JSON array to --output (default findings.json,
+"-" for stdout); each finding
 carries the vulnerability ID, affected component name/version, severity,
 CVSS score, fix version (if available), and data source. This is the
 structured input later consumed by VEX triage and the ENISA report
@@ -94,8 +95,8 @@ workflow.`,
 func init() {
 	vulnCmd.AddCommand(vulnCorrelateCmd)
 	vulnCorrelateCmd.Flags().StringVar(&correlateSBOMPath, "sbom", "", "path to a CycloneDX SBOM to correlate")
-	vulnCorrelateCmd.Flags().StringVarP(&correlateOutput, "output", "o", "", "write findings to this file instead of stdout")
-	vulnCorrelateCmd.Flags().BoolVar(&correlateUseOSV, "osv-scanner", true, "also query OSV.dev via osv-scanner and merge results with Grype's (requires osv-scanner on PATH)")
+	vulnCorrelateCmd.Flags().StringVarP(&correlateOutput, "output", "o", "findings.json", "write findings to this file (\"-\" for stdout)")
+	vulnCorrelateCmd.Flags().BoolVar(&correlateUseOSV, "osv-scanner", false, "also query OSV.dev via osv-scanner and merge results with Grype's (requires osv-scanner on PATH; off by default)")
 	vulnCorrelateCmd.Flags().BoolVar(&correlateUseKEV, "kev", true, "flag findings present in the CISA Known Exploited Vulnerabilities catalog (Article 14 trigger)")
 	vulnCorrelateCmd.Flags().StringVar(&correlateKEVCache, "kev-cache", "", "path to cache the KEV catalog at (default: ~/.crasec/cache/kev.json)")
 	vulnCorrelateCmd.Flags().BoolVar(&correlateUseEUVD, "enable-euvd", false, "cross-reference findings against ENISA's EU Vulnerability Database (beta API; off by default)")
@@ -264,10 +265,10 @@ func loadKEVCatalog(cmd *cobra.Command) (*kev.Catalog, error) {
 }
 
 // resolveCorrelateWriter returns the io.Writer to use for findings output.
-// When --output is set it opens (or creates) the named file; otherwise it
-// returns cmd.OutOrStdout(). The caller must invoke the returned close func.
+// --output "-" writes to stdout; otherwise it opens (or creates) the named
+// file. The caller must invoke the returned close func.
 func resolveCorrelateWriter(cmd *cobra.Command) (io.Writer, func(), error) {
-	if correlateOutput == "" {
+	if correlateOutput == "-" {
 		return cmd.OutOrStdout(), func() {}, nil
 	}
 	f, err := os.Create(correlateOutput) // #nosec G304 -- correlateOutput is a user-supplied CLI argument, not attacker-controlled remote input

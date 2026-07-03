@@ -132,9 +132,10 @@ crasec sbom validate            (optional but recommended — CI gate)
      │  score the SBOM against BSI TR-03183-2's 10 mandatory fields
      ▼
 crasec vuln correlate
-     │  Grype (library, in-process) + OSV-Scanner match the SBOM against
-     │  vulnerability databases; CISA KEV flags active exploitation;
-     │  FIRST.org EPSS scores 30-day exploitation probability;
+     │  Grype (library, in-process) matches the SBOM against vulnerability
+     │  databases, optionally merged with OSV-Scanner (--osv-scanner, off
+     │  by default) for broader ecosystem coverage; CISA KEV flags active
+     │  exploitation; FIRST.org EPSS scores 30-day exploitation probability;
      │  CRA Score = CVSS × KEV multiplier × EPSS weight
      ▼
 crasec vex generate

@@ -63,9 +63,9 @@ GoReleaser injects these automatically on every release.
 | Linter | What it catches |
 |---|---|
 | `errcheck` | Unhandled errors, including `_ = f()` assignments |
-| `govet` | All `go vet` analyzers (shadow, loopclosure, etc.) |
+| `govet` | All `go vet` analyzers except `fieldalignment` (shadow, loopclosure, etc. — `fieldalignment` is disabled since reordering struct fields for memory packing would reorder JSON keys in generated compliance documents) |
 | `staticcheck` | Bugs, performance issues, and deprecated API usage |
-| `gosec` | Security issues (G104 excluded — covered by errcheck) |
+| `gosec` | Security issues (G104 excluded — covered by errcheck); genuine false positives (CLI-supplied file paths, subprocess args) are suppressed per-line with `#nosec` and a reason, not globally |
 
 ### CI — GitHub Actions
 
@@ -94,8 +94,8 @@ Archives are `.tar.gz` on Linux/macOS and `.zip` on Windows. A `checksums.txt` (
 To cut a release:
 
 ```sh
-git tag v1.0.0
-git push origin v1.0.0
+git tag vX.Y.Z
+git push origin vX.Y.Z
 ```
 
 ## Testing against real projects
