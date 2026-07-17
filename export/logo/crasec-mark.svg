@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Crasec mark">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="48" height="48" role="img" aria-label="Crasec mark">
   <title>Crasec mark</title>
-  <rect x="0" y="0" width="48" height="48" fill="#1D9E75"/>
-  <line x1="0" y1="48" x2="48" y2="0" stroke="#FFFFFF" stroke-width="7" stroke-linecap="square"/>
+  <path d="M28,4 H68 L96,32 V84 A12,12 0 0 1 84,96 H16 A12,12 0 0 1 4,84 V16 A12,12 0 0 1 16,4 Z" fill="#0066CC"/>
+  <path d="M68,4 L96,32 L68,32 Z" fill="#7CB0EA"/>
 </svg>

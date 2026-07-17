@@ -34,7 +34,7 @@ import (
 // an 8px footer strip isn't worth the size, so this falls back to the
 // system sans-serif stack instead.
 func footerTemplate(label string) string {
-	return fmt.Sprintf(`<div style="font-family:system-ui,sans-serif; font-size:8px; width:100%%; text-align:center; color:#8A8A84; -webkit-print-color-adjust:exact;"><span style="text-transform:uppercase; letter-spacing:0.06em;">Crasec</span> &middot; %s &middot; Page <span class="pageNumber"></span> of <span class="totalPages"></span></div>`, label)
+	return fmt.Sprintf(`<div style="font-family:system-ui,sans-serif; font-size:8px; width:100%%; text-align:center; color:#6A6A6A; -webkit-print-color-adjust:exact;"><span style="text-transform:uppercase; letter-spacing:0.06em;">Crasec</span> &middot; %s &middot; Page <span class="pageNumber"></span> of <span class="totalPages"></span></div>`, label)
 }
 
 // RenderPDF converts html into a PDF using headless Chrome/Chromium at
